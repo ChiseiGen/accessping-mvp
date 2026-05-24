@@ -2027,9 +2027,53 @@ button:disabled {
   line-height: 1.58;
 }
 
+.leadBenefits {
+  display: grid;
+  gap: 9px;
+  max-width: 620px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.leadBenefits li {
+  position: relative;
+  padding-left: 18px;
+  color: var(--ink);
+  font-size: 0.93rem;
+  line-height: 1.45;
+}
+
+.leadBenefits li::before {
+  position: absolute;
+  top: 0.58em;
+  left: 0;
+  width: 7px;
+  height: 7px;
+  background: var(--accent);
+  border-radius: 999px;
+  content: "";
+}
+
 .leadForm {
   display: grid;
   gap: 10px;
+  padding: 16px;
+  background: rgba(251, 252, 248, 0.72);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+:root[data-theme="dark"] .leadForm {
+  background: rgba(13, 17, 23, 0.58);
+  border-color: rgba(45, 212, 191, 0.12);
+}
+
+.leadFormLabel {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .leadForm button {
@@ -2041,6 +2085,12 @@ button:disabled {
   color: var(--accent-strong);
   font-size: 0.86rem;
   font-weight: 600;
+}
+
+.privacyNote {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
 }
 
 .leadForm .leadError {

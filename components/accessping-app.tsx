@@ -174,6 +174,12 @@ const manualChecklist = [
   }
 ] as const;
 
+const leadBenefits = [
+  "PDF export when the beta opens",
+  "Saved report history for repeat clients",
+  "Fix-plan templates for common accessibility issues"
+] as const;
+
 function createSampleResult(): ScanResult {
   return {
     url: "https://demo.accessping.app/agency-launch",
@@ -638,7 +644,10 @@ export default function Home() {
 
       window.localStorage.setItem("accessping-leads", JSON.stringify(nextLeads));
       setLeadStatus("saved");
-      setLeadMessage(payload.message || "You are on the early access list.");
+      setLeadMessage(
+        payload.message ||
+          "You are on the beta list. I will send the PDF export and saved-report flow when it opens."
+      );
       track("Lead Captured", {
         score: result?.score ?? null,
         issueCount: result?.issueCount ?? null
@@ -1105,14 +1114,20 @@ export default function Home() {
 
           <form className="leadCapture" id="early-access" onSubmit={submitLead} data-scroll-reveal>
             <div>
-              <p className="eyebrow">Early access</p>
-              <h3>Want saved reports for your next client handoff?</h3>
+              <p className="eyebrow">Early access beta</p>
+              <h3>Get the report workflow when it becomes more than a preview.</h3>
               <p>
-                Join the early list for PDF export, report history, and weekly
-                checks for client sites you already manage.
+                Join the beta list for PDF export, saved client reports, and reusable fix
+                templates built around the handoff flow you just tested.
               </p>
+              <ul className="leadBenefits" aria-label="Early access benefits">
+                {leadBenefits.map((benefit) => (
+                  <li key={benefit}>{benefit}</li>
+                ))}
+              </ul>
             </div>
             <div className="leadForm">
+              <span className="leadFormLabel">Reserve early access</span>
               <label className="srOnly" htmlFor="lead-email">
                 Email address
               </label>
@@ -1136,8 +1151,9 @@ export default function Home() {
                   ? "Saving…"
                   : leadStatus === "saved"
                     ? "Saved"
-                    : "Get early access"}
+                    : "Send me the report beta"}
               </button>
+              <span className="privacyNote">No spam. Just beta updates for AccessPing reports.</span>
               {leadMessage ? (
                 <p
                   className={leadStatus === "error" ? "leadError" : ""}
