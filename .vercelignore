@@ -1,0 +1,7 @@
+.agents/
+.next/
+node_modules/
+data/
+supabase/
+*.log
+.env*.local

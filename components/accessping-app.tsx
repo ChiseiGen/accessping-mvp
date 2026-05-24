@@ -1,0 +1,993 @@
+"use client";
+
+import { CSSProperties, FormEvent, MouseEvent, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
+import SwitchToggleThemeDemo from "@/components/ui/toggle-theme";
+
+type Impact = "critical" | "serious" | "moderate" | "minor";
+
+type ScanIssue = {
+  id: string;
+  impact: Impact;
+  help: string;
+  description: string;
+  helpUrl: string;
+  nodes: Array<{
+    target: string[];
+    html: string;
+    failureSummary: string;
+  }>;
+};
+
+type ScanResult = {
+  url: string;
+  scannedAt: string;
+  score: number;
+  summary: Record<Impact, number>;
+  issueCount: number;
+  issues: ScanIssue[];
+  pageTitle: string;
+};
+
+const exampleSites = [
+  {
+    url: "https://www.wikipedia.org",
+    domain: "wikipedia.org",
+    logoSrc: "https://upload.wikimedia.org/wikipedia/commons/8/80/Wikipedia-logo-v2.svg",
+    logoAlt: "Wikipedia logo",
+    tone: "wiki"
+  },
+  {
+    url: "https://www.shopify.com",
+    domain: "shopify.com",
+    logoSrc: "https://cdn.svglogos.dev/logos/shopify.svg",
+    logoAlt: "Shopify logo",
+    tone: "shopify"
+  },
+  {
+    url: "https://github.com",
+    domain: "github.com",
+    logoSrc: "https://cdn.svglogos.dev/logos/github-icon.svg",
+    logoAlt: "GitHub logo",
+    tone: "github"
+  },
+  {
+    url: "https://wordpress.org",
+    domain: "wordpress.org",
+    logoSrc: "https://cdn.svglogos.dev/logos/wordpress-icon.svg",
+    logoAlt: "WordPress logo",
+    tone: "wordpress"
+  },
+  {
+    url: "https://vercel.com",
+    domain: "vercel.com",
+    logoSrc: "https://cdn.svglogos.dev/logos/vercel-icon.svg",
+    logoAlt: "Vercel logo",
+    tone: "vercel"
+  },
+  {
+    url: "https://stripe.com",
+    domain: "stripe.com",
+    logoSrc: "https://cdn.svglogos.dev/logos/stripe.svg",
+    logoAlt: "Stripe logo",
+    tone: "stripe"
+  },
+  {
+    url: "https://www.notion.com",
+    domain: "notion.com",
+    logoSrc: "https://cdn.svglogos.dev/logos/notion-icon.svg",
+    logoAlt: "Notion logo",
+    tone: "notion"
+  }
+];
+
+const impactLabels: Record<Impact, string> = {
+  critical: "Critical",
+  serious: "Serious",
+  moderate: "Moderate",
+  minor: "Minor"
+};
+
+const impactDescriptions: Record<Impact, string> = {
+  critical: "Blocks key access for some visitors.",
+  serious: "Likely creates real friction.",
+  moderate: "Worth fixing in the next pass.",
+  minor: "Small polish and robustness issue."
+};
+
+const genericGuidance = {
+  meaning: "This issue may make the page harder to understand or operate for some visitors.",
+  why: "Accessibility problems can block users using keyboards, screen readers, zoom, or high-contrast settings.",
+  fix: "Review the affected element, follow the WCAG help link, and retest after the markup or content is updated."
+};
+
+const issueGuidance: Record<string, typeof genericGuidance> = {
+  "link-name": {
+    meaning: "One or more links do not have readable text or an accessible name.",
+    why: "Screen reader users may only hear \"link\" without knowing where it goes.",
+    fix: "Add clear visible text, an aria-label, or a descriptive image alt value inside the link."
+  },
+  "image-alt": {
+    meaning: "An image is missing alternative text.",
+    why: "People using screen readers may miss important visual information.",
+    fix: "Add concise alt text for meaningful images, or use empty alt text for decorative images."
+  },
+  "color-contrast": {
+    meaning: "Text and background colors do not have enough contrast.",
+    why: "Low contrast makes content difficult to read for users with low vision or bright screens.",
+    fix: "Darken the text, lighten the background, or choose a color pair that passes WCAG contrast."
+  },
+  label: {
+    meaning: "A form control does not have a clear label.",
+    why: "Assistive technologies may not announce what the field is for.",
+    fix: "Connect a visible label to the field with htmlFor/id, or provide a clear aria-label."
+  },
+  "button-name": {
+    meaning: "A button does not have readable text or an accessible name.",
+    why: "Users may not know what action the button performs.",
+    fix: "Add visible button text or an aria-label that describes the action."
+  },
+  region: {
+    meaning: "Some page content is not inside a landmark region.",
+    why: "Landmarks help screen reader and keyboard users jump through the page faster.",
+    fix: "Wrap page areas in semantic landmarks like header, main, nav, aside, or footer."
+  },
+  "heading-order": {
+    meaning: "Heading levels skip or appear out of order.",
+    why: "A clear heading structure helps users scan the page and understand hierarchy.",
+    fix: "Use headings in order, such as h1, h2, h3, without skipping levels for visual styling."
+  }
+};
+
+const priorityLabels: Record<Impact, string> = {
+  critical: "Fix before launch",
+  serious: "Fix this week",
+  moderate: "Plan next sprint",
+  minor: "Polish pass"
+};
+
+const priorityOrder: Record<Impact, number> = {
+  critical: 0,
+  serious: 1,
+  moderate: 2,
+  minor: 3
+};
+
+function getScoreStatus(score: number) {
+  if (score >= 90) {
+    return {
+      label: "Ready for handoff after a quick accessibility pass",
+      tone: "good",
+      summary:
+        "The page is in good shape. Review the remaining items, then package the scan as proof that the basics were checked."
+    };
+  }
+
+  if (score >= 75) {
+    return {
+      label: "Usable, but fix these before the client sees it",
+      tone: "watch",
+      summary:
+        "The page can move forward, but the serious issues are worth fixing before a launch review or client handoff."
+    };
+  }
+
+  return {
+    label: "Do not hand this off without an accessibility review",
+    tone: "risk",
+    summary:
+      "The scan found enough friction that the page needs attention before it supports a public campaign or paid client delivery."
+  };
+}
+
+function getTopPriorities(issues: ScanIssue[]) {
+  return [...issues]
+    .sort((a, b) => priorityOrder[a.impact] - priorityOrder[b.impact])
+    .slice(0, 3);
+}
+
+function formatScanDate(scannedAt: string) {
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short"
+  }).format(new Date(scannedAt));
+}
+
+function getReportId(scannedAt: string, targetUrl: string) {
+  const datePart = new Date(scannedAt)
+    .toISOString()
+    .slice(0, 10)
+    .replaceAll("-", "");
+  const domainPart = getDomain(targetUrl)
+    .replace(/[^a-z0-9]/gi, "")
+    .slice(0, 10)
+    .toUpperCase();
+
+  return `AP-${datePart}-${domainPart || "REPORT"}`;
+}
+
+function getDomain(targetUrl: string) {
+  try {
+    return new URL(targetUrl).hostname.replace(/^www\./, "");
+  } catch {
+    return targetUrl;
+  }
+}
+
+function cleanPageTitle(title: string, targetUrl: string) {
+  const domain = getDomain(targetUrl);
+  const brand = domain.split(".")[0] || domain;
+  const rawTitle = title || domain;
+  const parts = rawTitle
+    .split(/\s[·|–—-]\s/g)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  const cleanedParts = parts.filter((part, index) => {
+    const normalized = part.toLowerCase();
+    const isBrandRepeat =
+      normalized === brand.toLowerCase() ||
+      normalized === domain.toLowerCase();
+
+    return !(isBrandRepeat && index > 0);
+  });
+
+  const primary = cleanedParts[0] || rawTitle;
+  return primary.length > 58 ? `${primary.slice(0, 55).trim()}…` : primary;
+}
+
+export default function Home() {
+  const previewRef = useRef<HTMLElement | null>(null);
+  const [url, setUrl] = useState("");
+  const [result, setResult] = useState<ScanResult | null>(null);
+  const [error, setError] = useState("");
+  const [isScanning, setIsScanning] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [leadEmail, setLeadEmail] = useState("");
+  const [leadStatus, setLeadStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [leadMessage, setLeadMessage] = useState("");
+  const displayScore = result ? result.score : isScanning ? 0 : 82;
+  const scoreAngle = `${Math.max(0, Math.min(100, displayScore)) * 3.6}deg`;
+  const resultDomain = result ? getDomain(result.url) : "";
+  const resultTitle = result ? cleanPageTitle(result.pageTitle, result.url) : "";
+  const scoreStatus = result ? getScoreStatus(result.score) : null;
+  const topPriorities = result ? getTopPriorities(result.issues) : [];
+  const reportId = result ? getReportId(result.scannedAt, result.url) : "";
+
+  useEffect(() => {
+    const savedTheme = window.localStorage.getItem("accessping-theme");
+    if (savedTheme === "dark" || savedTheme === "light") {
+      setTheme(savedTheme);
+      document.documentElement.dataset.theme = savedTheme;
+      document.documentElement.classList.toggle("dark", savedTheme === "dark");
+      return;
+    }
+
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const initialTheme = prefersDark ? "dark" : "light";
+    setTheme(initialTheme);
+    document.documentElement.dataset.theme = initialTheme;
+    document.documentElement.classList.toggle("dark", initialTheme === "dark");
+  }, []);
+
+  useEffect(() => {
+    const elements = Array.from(document.querySelectorAll<HTMLElement>("[data-scroll-reveal]"));
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("isVisible");
+          }
+        });
+      },
+      {
+        rootMargin: "0px 0px -12% 0px",
+        threshold: 0.12
+      }
+    );
+
+    elements.forEach((element) => observer.observe(element));
+
+    return () => observer.disconnect();
+  }, [result, isScanning]);
+
+  function setThemeMode(isDark: boolean) {
+    const nextTheme = isDark ? "dark" : "light";
+    setTheme(nextTheme);
+    document.documentElement.dataset.theme = nextTheme;
+    document.documentElement.classList.toggle("dark", isDark);
+    window.localStorage.setItem("accessping-theme", nextTheme);
+  }
+
+  const orderedIssues = useMemo(() => {
+    if (!result) return [];
+    const order: Record<Impact, number> = {
+      critical: 0,
+      serious: 1,
+      moderate: 2,
+      minor: 3
+    };
+    return [...result.issues].sort((a, b) => order[a.impact] - order[b.impact]);
+  }, [result]);
+
+  async function runScan(targetUrl: string) {
+    setError("");
+    setIsScanning(true);
+    setResult(null);
+
+    try {
+      const response = await fetch("/api/scan", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ url: targetUrl })
+      });
+
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload.error || "The scan could not be completed.");
+      }
+
+      setResult(payload);
+      setLeadStatus("idle");
+    } catch (scanError) {
+      setError(scanError instanceof Error ? scanError.message : "The scan failed.");
+    } finally {
+      setIsScanning(false);
+    }
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    runScan(url);
+  }
+
+  function printReport() {
+    window.print();
+  }
+
+  async function submitLead(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const trimmedEmail = leadEmail.trim().toLowerCase();
+    if (!trimmedEmail) return;
+
+    setLeadStatus("saving");
+    setLeadMessage("");
+
+    const leadPayload = {
+      email: trimmedEmail,
+      url: result?.url || "",
+      score: result?.score ?? null,
+      issueCount: result?.issueCount ?? null,
+      pageTitle: result?.pageTitle || ""
+    };
+
+    try {
+      const response = await fetch("/api/leads", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(leadPayload)
+      });
+
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload.error || "The email could not be saved.");
+      }
+
+      const existingLeads = JSON.parse(
+        window.localStorage.getItem("accessping-leads") || "[]"
+      ) as Array<typeof leadPayload & { createdAt: string }>;
+
+      const nextLeads = [
+        ...existingLeads.filter((lead) => lead.email !== trimmedEmail),
+        {
+          ...leadPayload,
+          createdAt: new Date().toISOString()
+        }
+      ];
+
+      window.localStorage.setItem("accessping-leads", JSON.stringify(nextLeads));
+      setLeadStatus("saved");
+      setLeadMessage("Saved. This lead is now captured by the MVP backend.");
+    } catch (leadError) {
+      setLeadStatus("error");
+      setLeadMessage(
+        leadError instanceof Error
+          ? leadError.message
+          : "The email could not be saved. Try again."
+      );
+    }
+  }
+
+  function handlePreviewPointerMove(event: MouseEvent<HTMLElement>) {
+    const panel = previewRef.current;
+    if (!panel) return;
+
+    const rect = panel.getBoundingClientRect();
+    panel.style.setProperty("--pointer-x", `${event.clientX - rect.left}px`);
+    panel.style.setProperty("--pointer-y", `${event.clientY - rect.top}px`);
+  }
+
+  return (
+    <main className="shell">
+      <a className="skipLink" href="#scanner">
+        Skip to scanner
+      </a>
+
+      <header className="topbar">
+        <div className="topbarInner">
+          <a className="brandMark" href="/" aria-label="AccessPing home">
+            <span aria-hidden="true">A</span>
+            <strong>AccessPing</strong>
+          </a>
+          <nav className="topnav" aria-label="Product navigation">
+            <a href="#scanner">Scanner</a>
+            <a href="#report">Report</a>
+            <a href="#issues">Issues</a>
+          </nav>
+          <div className="topStatus">
+            <span aria-hidden="true" />
+            MVP online
+          </div>
+          <SwitchToggleThemeDemo isDark={theme === "dark"} onThemeChange={setThemeMode} />
+        </div>
+      </header>
+
+      <section className="hero">
+        <div className="heroCopy" id="scanner">
+          <p className="eyebrow revealItem">Pre-handoff accessibility check</p>
+          <h1 className="revealItem delayOne">Find access issues before your client does.</h1>
+          <p className="lede revealItem delayTwo">
+            Run a fast WCAG first pass on any public page, then turn the findings into
+            a clear fix list your team can use before launch.
+          </p>
+
+          <form className="scanForm revealItem delayThree" onSubmit={handleSubmit}>
+            <div className="formTopline">
+              <label htmlFor="url">Website URL</label>
+              <span>One-page scan</span>
+            </div>
+            <div className="inputRow">
+              <input
+                id="url"
+                name="url"
+                type="url"
+                value={url}
+                onChange={(event) => setUrl(event.target.value)}
+                placeholder="https://yourwebsite.com..."
+                autoComplete="off"
+                inputMode="url"
+                spellCheck={false}
+                required
+              />
+              <button type="submit" disabled={isScanning}>
+                {isScanning ? "Scanning..." : "Scan site"}
+              </button>
+            </div>
+            <p className="hint">
+              One public page only. Results stay in this browser session.
+            </p>
+          </form>
+
+          <div className="examplesMarquee revealItem delayFour" aria-label="Example websites">
+            <div className="marqueeTrack">
+              {[...exampleSites, ...exampleSites].map((site, index) => (
+                <button
+                  key={`${site.url}-${index}`}
+                  className="exampleChip"
+                  type="button"
+                  onClick={() => {
+                    setUrl(site.url);
+                    runScan(site.url);
+                  }}
+                >
+                  <span className={`siteLogo ${site.tone}`} aria-hidden="true">
+                    <Image
+                      src={site.logoSrc}
+                      alt=""
+                      width={20}
+                      height={20}
+                      sizes="20px"
+                      unoptimized
+                    />
+                  </span>
+                  <span>{site.domain}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="signalStrip revealItem delayFive" aria-label="MVP capabilities">
+            <div>
+              <strong>WCAG first pass</strong>
+              <span>Catch common blockers fast</span>
+            </div>
+            <div>
+              <strong>No saved data</strong>
+              <span>Private by default</span>
+            </div>
+            <div>
+              <strong>Client report</strong>
+              <span>Print today, export next</span>
+            </div>
+          </div>
+        </div>
+
+        <aside
+          ref={previewRef}
+          className="previewPanel"
+          aria-label="Scanner preview"
+          id="report"
+          onMouseMove={handlePreviewPointerMove}
+          data-scroll-reveal
+        >
+          <div className="scanSweep" aria-hidden="true" />
+          <div className="panelHeader">
+            <span>Report console</span>
+            <span className="statusPill">
+              <span className="statusDot" aria-hidden="true" />
+              Ready
+            </span>
+          </div>
+          <div
+            key={result ? result.score : isScanning ? "scan" : "idle"}
+            className="scoreDial"
+            style={{ "--score-angle": scoreAngle } as CSSProperties}
+          >
+            <span>{result ? result.score : isScanning ? "--" : "82"}</span>
+            <small>access score</small>
+          </div>
+          <div className="metricGrid">
+            {(Object.keys(impactLabels) as Impact[]).map((impact) => (
+              <div key={impact} className={`metric ${impact}`}>
+                <strong>{result ? result.summary[impact] : impact === "serious" ? 3 : 0}</strong>
+                <span>{impactLabels[impact]}</span>
+              </div>
+            ))}
+          </div>
+          <div className="scanTimeline" aria-label="Scan pipeline">
+            <div className={isScanning ? "active" : ""}>
+              <span />
+              Fetch page
+            </div>
+            <div className={isScanning ? "active delayOne" : ""}>
+              <span />
+              Run rules
+            </div>
+            <div className={isScanning ? "active delayTwo" : ""}>
+              <span />
+              Prioritize fixes
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      {error ? (
+        <section className="notice error" role="alert" data-scroll-reveal>
+          <strong>Scan failed</strong>
+          <p>{error}</p>
+          <p>
+            Try one of the sample sites above. Some websites block automated checks
+            or return pages this local MVP cannot read yet.
+          </p>
+        </section>
+      ) : null}
+
+      {isScanning ? <LoadingReport /> : null}
+
+      {result ? (
+        <section className="results" aria-live="polite" id="issues" data-scroll-reveal>
+          <div className="resultsHeader">
+            <div>
+              <p className="eyebrow">Scan complete</p>
+              <h2>{resultTitle}</h2>
+              <span className="resultDomain">{resultDomain}</span>
+              <p>
+                Scanned {formatScanDate(result.scannedAt)}. Found{" "}
+                {result.issueCount} issue groups to review before handoff.
+              </p>
+            </div>
+            <div className="finalScore">
+              <span>{result.score}</span>
+              <small>/100</small>
+            </div>
+          </div>
+
+          <div className="summaryStrip">
+            {(Object.keys(impactLabels) as Impact[]).map((impact) => (
+              <div key={impact} data-scroll-reveal>
+                <strong>{result.summary[impact]}</strong>
+                <span>{impactLabels[impact]}</span>
+                <p>{impactDescriptions[impact]}</p>
+              </div>
+            ))}
+          </div>
+
+          {scoreStatus ? (
+            <div className={`clientBrief ${scoreStatus.tone}`} data-scroll-reveal>
+              <div className="briefMain">
+                <p className="eyebrow">Client summary</p>
+                <h3>{scoreStatus.label}</h3>
+                <p>{scoreStatus.summary}</p>
+              </div>
+
+              <div className="briefStats" aria-label="Report readiness">
+                <div>
+                  <span>Score</span>
+                  <strong>{result.score}/100</strong>
+                </div>
+                <div>
+                  <span>Issue groups</span>
+                  <strong>{result.issueCount}</strong>
+                </div>
+                <div>
+                  <span>Top priority</span>
+                  <strong>
+                    {topPriorities[0] ? priorityLabels[topPriorities[0].impact] : "Manual QA"}
+                  </strong>
+                </div>
+              </div>
+
+              <div className="priorityPreview">
+                <div className="sectionHeading">
+                  <span>Priority fix list</span>
+                  <small>Before launch</small>
+                </div>
+
+                {topPriorities.length > 0 ? (
+                  <ol>
+                    {topPriorities.map((issue) => {
+                      const guidance = issueGuidance[issue.id] || genericGuidance;
+
+                      return (
+                        <li key={`priority-${issue.id}`}>
+                          <span className={`impactDot ${issue.impact}`} aria-hidden="true" />
+                          <div>
+                            <strong>{issue.help}</strong>
+                            <p>{guidance.fix}</p>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                ) : (
+                  <p className="emptyBrief">
+                    No automated issues were found. Add manual keyboard and screen reader QA before
+                    calling the page client-ready.
+                  </p>
+                )}
+              </div>
+            </div>
+          ) : null}
+
+          {scoreStatus ? (
+            <article className="auditReport" aria-label="Client-ready accessibility report" data-scroll-reveal>
+              <div className="auditReportHeader">
+                <div>
+                  <p className="eyebrow">Client-ready report</p>
+                  <h3>Accessibility first pass</h3>
+                  <p>
+                    A concise audit summary for launch reviews, QA handoffs, and client
+                    conversations.
+                  </p>
+                </div>
+                <div className="reportMeta">
+                  <span>{reportId}</span>
+                  <strong>{formatScanDate(result.scannedAt)}</strong>
+                </div>
+              </div>
+
+              <div className="reportSnapshot">
+                <div>
+                  <span>Website</span>
+                  <strong>{resultDomain}</strong>
+                  <p>{result.url}</p>
+                </div>
+                <div>
+                  <span>Access score</span>
+                  <strong>{result.score}/100</strong>
+                  <p>{scoreStatus.label}</p>
+                </div>
+                <div>
+                  <span>Automated findings</span>
+                  <strong>{result.issueCount}</strong>
+                  <p>Issue groups found by the WCAG first pass.</p>
+                </div>
+              </div>
+
+              <div className="reportNarrative">
+                <div>
+                  <span>Executive note</span>
+                  <p>{scoreStatus.summary}</p>
+                </div>
+                <div>
+                  <span>Recommended next step</span>
+                  <p>
+                    Fix the highest-priority issues first, rerun the scan, then complete a
+                    manual keyboard and screen reader review before final approval.
+                  </p>
+                </div>
+              </div>
+
+              <div className="reportPriorityBlock">
+                <div className="sectionHeading">
+                  <span>Top fixes to address</span>
+                  <small>Ordered by launch risk</small>
+                </div>
+                {topPriorities.length > 0 ? (
+                  <ol>
+                    {topPriorities.map((issue) => {
+                      const guidance = issueGuidance[issue.id] || genericGuidance;
+
+                      return (
+                        <li key={`report-${issue.id}`}>
+                          <div>
+                            <span className={`impactBadge ${issue.impact}`}>
+                              {impactLabels[issue.impact]}
+                            </span>
+                            <strong>{issue.help}</strong>
+                          </div>
+                          <p>{guidance.fix}</p>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                ) : (
+                  <p>
+                    No automated findings were detected. Add manual QA before sending a final
+                    accessibility sign-off.
+                  </p>
+                )}
+              </div>
+
+              <div className="reportFooter">
+                <span>Generated by AccessPing</span>
+                <span>Automated checks do not replace manual accessibility QA.</span>
+              </div>
+            </article>
+          ) : null}
+
+          <div className="reportCta" data-scroll-reveal>
+            <div>
+              <p className="eyebrow">Report preview</p>
+              <h3>Turn this scan into proof your client can understand.</h3>
+              <p>
+                Package the score, priority fixes, affected elements, and plain-English
+                guidance into a report you can attach to a launch review.
+              </p>
+            </div>
+            <div className="ctaActions" aria-label="Planned report actions">
+              <button type="button" onClick={printReport}>
+                Print report
+              </button>
+              <button type="button" disabled>
+                Create fix plan soon
+              </button>
+            </div>
+          </div>
+
+          <form className="leadCapture" onSubmit={submitLead} data-scroll-reveal>
+            <div>
+              <p className="eyebrow">Early access</p>
+              <h3>Want the full report flow when it ships?</h3>
+              <p>
+                Join the early list for email export, saved reports, and weekly
+                client-site monitoring.
+              </p>
+            </div>
+            <div className="leadForm">
+              <input
+                type="email"
+                name="email"
+                value={leadEmail}
+                onChange={(event) => {
+                  setLeadEmail(event.target.value);
+                  setLeadStatus("idle");
+                  setLeadMessage("");
+                }}
+                placeholder="you@agency.com..."
+                autoComplete="email"
+                spellCheck={false}
+                aria-label="Email address"
+                required
+              />
+              <button type="submit" disabled={leadStatus === "saving"}>
+                {leadStatus === "saving"
+                  ? "Saving..."
+                  : leadStatus === "saved"
+                    ? "Saved"
+                    : "Get early access"}
+              </button>
+              {leadMessage ? (
+                <p className={leadStatus === "error" ? "leadError" : ""} role="status">
+                  {leadMessage}
+                </p>
+              ) : null}
+            </div>
+          </form>
+
+          {orderedIssues.length > 0 ? (
+            <div className="issueList">
+              {orderedIssues.map((issue) => {
+                const guidance = issueGuidance[issue.id] || genericGuidance;
+
+                return (
+                  <article className="issue" key={issue.id} data-scroll-reveal>
+                    <div className="issueTopline">
+                      <span className={`impactBadge ${issue.impact}`}>
+                        {impactLabels[issue.impact]}
+                      </span>
+                      <span className="priorityTag">{priorityLabels[issue.impact]}</span>
+                      <a href={issue.helpUrl} target="_blank" rel="noreferrer">
+                        WCAG help
+                      </a>
+                    </div>
+                    <h3>{issue.help}</h3>
+                    <p>{issue.description}</p>
+
+                    <div className="guidanceGrid">
+                      <div>
+                        <strong>What this means</strong>
+                        <p>{guidance.meaning}</p>
+                      </div>
+                      <div>
+                        <strong>Why it matters</strong>
+                        <p>{guidance.why}</p>
+                      </div>
+                      <div>
+                        <strong>How to fix</strong>
+                        <p>{guidance.fix}</p>
+                      </div>
+                    </div>
+
+                    <div className="nodeBox">
+                      <strong>{issue.nodes.length} affected element(s)</strong>
+                      <code>{issue.nodes[0]?.target.join(", ") || "No selector available"}</code>
+                      <p>{issue.nodes[0]?.failureSummary || "Review the affected markup."}</p>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="notice">
+              <strong>No automated issues found</strong>
+              <p>
+                Automated scans are a strong first pass. Add manual keyboard and screen
+                reader checks before sending a final client report.
+              </p>
+            </div>
+          )}
+        </section>
+      ) : null}
+
+      <section className="landingSections" aria-label="Product details">
+        <div className="problemBand" data-scroll-reveal>
+          <p className="eyebrow">The problem</p>
+          <h2>Client sites can look finished while still blocking real visitors.</h2>
+          <p>
+            Agencies and freelancers often catch accessibility late, after QA, feedback,
+            or launch pressure. AccessPing gives you a quick first pass before the page
+            becomes a client problem.
+          </p>
+        </div>
+
+        <div className="infoGrid">
+          <article className="infoPanel wide" data-scroll-reveal>
+            <p className="eyebrow">How it works</p>
+            <div className="stepList">
+              <div>
+                <span>01</span>
+                <strong>Paste a page URL</strong>
+                <p>Run an automated WCAG first pass against one public page.</p>
+              </div>
+              <div>
+                <span>02</span>
+                <strong>Review the launch risks</strong>
+                <p>See severity, affected elements, and fixes written in plain language.</p>
+              </div>
+              <div>
+                <span>03</span>
+                <strong>Send a clearer handoff</strong>
+                <p>Use the fix list now, then turn scans into reusable client reports.</p>
+              </div>
+            </div>
+          </article>
+
+          <article className="infoPanel" data-scroll-reveal>
+            <p className="eyebrow">Who it is for</p>
+            <h3>Built for people who need to ship clean client work.</h3>
+            <ul className="audienceList">
+              <li>Webflow freelancers</li>
+              <li>Shopify agencies</li>
+              <li>WordPress developers</li>
+              <li>Small SaaS teams</li>
+            </ul>
+          </article>
+        </div>
+
+        <section className="pricingSection" aria-label="Early access pricing" data-scroll-reveal>
+          <div className="pricingIntro">
+            <p className="eyebrow">Early access offer</p>
+            <h2>Start free. Upgrade when reports save client-review time.</h2>
+            <p>
+              AccessPing is free while the MVP is being shaped. These tiers show the
+              direction: faster checks for solo builders, reusable reports for teams,
+              and monitoring for agencies managing client sites.
+            </p>
+          </div>
+
+          <div className="pricingGrid">
+            <article className="pricePlan">
+              <div>
+                <span className="planLabel">Free</span>
+                <h3>First pass</h3>
+                <p>For quick pre-launch checks on one-off pages.</p>
+              </div>
+              <strong>$0</strong>
+              <ul>
+                <li>One-page WCAG scan</li>
+                <li>Access score and severity summary</li>
+                <li>Printable report preview</li>
+              </ul>
+              <a href="#scanner">Run a scan</a>
+            </article>
+
+            <article className="pricePlan featured">
+              <div>
+                <span className="planLabel">Pro</span>
+                <h3>Report export</h3>
+                <p>For freelancers who want cleaner handoffs without rebuilding reports.</p>
+              </div>
+              <strong>$12<span>/mo</span></strong>
+              <ul>
+                <li>Saved client-ready reports</li>
+                <li>Email export and report history</li>
+                <li>Fix-plan templates for common issues</li>
+              </ul>
+              <a href="#issues">Get early access</a>
+            </article>
+
+            <article className="pricePlan">
+              <div>
+                <span className="planLabel">Agency</span>
+                <h3>Client monitoring</h3>
+                <p>For teams checking multiple sites before retainers and launches.</p>
+              </div>
+              <strong>$39<span>/mo</span></strong>
+              <ul>
+                <li>Weekly client-site checks</li>
+                <li>Branded report exports</li>
+                <li>Priority dashboard for fixes</li>
+              </ul>
+              <a href="#issues">Request agency access</a>
+            </article>
+          </div>
+        </section>
+      </section>
+    </main>
+  );
+}
+
+function LoadingReport() {
+  return (
+    <section className="loadingReport" aria-live="polite" aria-label="Scan loading">
+      <div className="skeleton wide" />
+      <div className="skeletonGrid">
+        <div className="skeleton" />
+        <div className="skeleton" />
+        <div className="skeleton" />
+      </div>
+      <div className="skeletonList">
+        <div className="skeleton row" />
+        <div className="skeleton row" />
+        <div className="skeleton row" />
+      </div>
+    </section>
+  );
+}
