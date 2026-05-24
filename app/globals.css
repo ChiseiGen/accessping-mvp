@@ -103,6 +103,7 @@ body {
 #issues,
 #top-fixes,
 #manual-qa,
+#report-preview,
 #early-access {
   scroll-margin-top: 92px;
 }
@@ -2637,6 +2638,7 @@ code {
   #issues,
   #top-fixes,
   #manual-qa,
+  #report-preview,
   #early-access {
     scroll-margin-top: 112px;
   }

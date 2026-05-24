@@ -299,8 +299,8 @@ export default function Home() {
     : "";
   const secondaryNextAction = result
     ? result.score >= 90
-      ? "Print the report and keep it with the launch notes."
-      : "Use the report preview to explain what needs attention before handoff."
+      ? "Finish the manual QA pass, then keep the report preview as launch proof."
+      : "Use the checklist and report preview to explain what needs attention before handoff."
     : "";
 
   useEffect(() => {
@@ -800,9 +800,9 @@ export default function Home() {
                 <a href={topPriorities.length > 0 ? "#top-fixes" : "#manual-qa"}>
                   {topPriorities.length > 0 ? "Review top fixes" : "Open manual QA"}
                 </a>
-                <button type="button" onClick={printReport}>
-                  Print report
-                </button>
+                <a href={topPriorities.length > 0 ? "#manual-qa" : "#report-preview"}>
+                  {topPriorities.length > 0 ? "Manual QA checklist" : "Open report preview"}
+                </a>
                 <a href="#early-access">Get report updates</a>
               </div>
             </section>
@@ -916,7 +916,7 @@ export default function Home() {
             </div>
           </section>
 
-          <div className="reportCta" data-scroll-reveal>
+          <div className="reportCta" id="report-preview" data-scroll-reveal>
             <div>
               <p className="eyebrow">Report preview</p>
               <h3>Turn this scan into proof your client can understand.</h3>
