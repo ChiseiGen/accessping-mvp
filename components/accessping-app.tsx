@@ -399,6 +399,14 @@ function cleanPageTitle(title: string, targetUrl: string) {
   return primary.length > 58 ? `${primary.slice(0, 55).trim()}…` : primary;
 }
 
+function scrollToResults() {
+  window.setTimeout(() => {
+    window.requestAnimationFrame(() => {
+      document.getElementById("issues")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, 120);
+}
+
 export default function Home() {
   const previewRef = useRef<HTMLElement | null>(null);
   const [url, setUrl] = useState("");
@@ -561,9 +569,7 @@ export default function Home() {
         issueCount: payload.issueCount
       });
 
-      window.setTimeout(() => {
-        document.getElementById("issues")?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 80);
+      scrollToResults();
     } catch (scanError) {
       setError(scanError instanceof Error ? scanError.message : "The scan failed.");
       track("Scan Failed");
@@ -584,9 +590,7 @@ export default function Home() {
       issueCount: sampleResult.issueCount
     });
 
-    window.setTimeout(() => {
-      document.getElementById("issues")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 80);
+    scrollToResults();
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -865,7 +869,7 @@ export default function Home() {
       {isScanning ? <LoadingReport /> : null}
 
       {result ? (
-        <section className="results" aria-live="polite" id="issues" data-scroll-reveal>
+        <section className="results isVisible" aria-live="polite" id="issues" data-scroll-reveal>
           <div className="resultsHeader">
             <div>
               <p className="eyebrow">{result.isSample ? "Sample report" : "Scan complete"}</p>
