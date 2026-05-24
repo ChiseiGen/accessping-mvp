@@ -560,6 +560,10 @@ export default function Home() {
         score: payload.score,
         issueCount: payload.issueCount
       });
+
+      window.setTimeout(() => {
+        document.getElementById("issues")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 80);
     } catch (scanError) {
       setError(scanError instanceof Error ? scanError.message : "The scan failed.");
       track("Scan Failed");
