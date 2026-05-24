@@ -1,17 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readFileSync } from "fs";
-import path from "path";
+import axe from "axe-core";
 import { JSDOM } from "jsdom";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
 const SCAN_TIMEOUT_MS = 15000;
-
-const axeSource = readFileSync(
-  path.join(process.cwd(), "node_modules", "axe-core", "axe.min.js"),
-  "utf8"
-);
 
 type Impact = "critical" | "serious" | "moderate" | "minor";
 
@@ -116,7 +110,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    dom.window.eval(axeSource);
+    dom.window.eval(axe.source);
 
     const axeRunner = (
       dom.window as unknown as {
