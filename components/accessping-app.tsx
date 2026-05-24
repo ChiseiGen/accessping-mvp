@@ -188,19 +188,26 @@ const leadBenefits = [
   "Fix-plan templates for common accessibility issues"
 ] as const;
 
+const sampleScenario = {
+  client: "Northstar Studio",
+  pageType: "Shopify product launch page",
+  deadline: "48-hour pre-handoff review",
+  goal: "Show how AccessPing turns scan results into client-ready priorities."
+} as const;
+
 function createSampleResult(): ScanResult {
   return {
-    url: "https://demo.accessping.app/agency-launch",
+    url: "https://demo.accessping.app/northstar-shopify-launch",
     scannedAt: new Date().toISOString(),
-    score: 78,
+    score: 74,
     summary: {
       critical: 0,
-      serious: 1,
+      serious: 2,
       moderate: 1,
       minor: 1
     },
-    issueCount: 3,
-    pageTitle: "Agency launch page accessibility sample",
+    issueCount: 4,
+    pageTitle: "Northstar Studio Shopify launch page - pre-handoff accessibility sample",
     isSample: true,
     issues: [
       {
@@ -211,10 +218,31 @@ function createSampleResult(): ScanResult {
         helpUrl: "https://dequeuniversity.com/rules/axe/4.11/color-contrast",
         nodes: [
           {
-            target: [".hero-secondary-copy"],
-            html: '<p class="hero-secondary-copy">Launch faster with a cleaner handoff.</p>',
+            target: [".product-hero .launch-note"],
+            html: '<p class="launch-note">Limited pre-order pricing ends Friday.</p>',
             failureSummary:
-              "Fix any of the following:\n  Element has insufficient color contrast of 3.1:1"
+              "Fix any of the following:\n  Element has insufficient color contrast of 3.2:1"
+          },
+          {
+            target: [".announcement-bar a"],
+            html: '<a class="promo-link" href="/collections/new">Shop the edit</a>',
+            failureSummary:
+              "Fix any of the following:\n  Element has insufficient color contrast of 3.4:1"
+          }
+        ]
+      },
+      {
+        id: "link-name",
+        impact: "serious",
+        help: "Links must have discernible text",
+        description: "Ensure links have readable text or accessible names.",
+        helpUrl: "https://dequeuniversity.com/rules/axe/4.11/link-name",
+        nodes: [
+          {
+            target: [".product-card a.icon-link"],
+            html: '<a class="icon-link" href="/products/weekend-tote"><svg aria-hidden="true"></svg></a>',
+            failureSummary:
+              "Fix any of the following:\n  Element is missing link text that is visible to screen readers"
           }
         ]
       },
@@ -226,7 +254,7 @@ function createSampleResult(): ScanResult {
         helpUrl: "https://dequeuniversity.com/rules/axe/4.11/button-name",
         nodes: [
           {
-            target: [".carousel-next"],
+            target: [".product-gallery .carousel-next"],
             html: '<button class="carousel-next"><svg aria-hidden="true"></svg></button>',
             failureSummary:
               "Fix any of the following:\n  Element does not have inner text that is visible to screen readers"
@@ -241,8 +269,8 @@ function createSampleResult(): ScanResult {
         helpUrl: "https://dequeuniversity.com/rules/axe/4.11/image-alt",
         nodes: [
           {
-            target: [".case-study-logo"],
-            html: '<img class="case-study-logo" src="/logos/client-mark.svg">',
+            target: [".press-strip img"],
+            html: '<img class="press-logo" src="/logos/retail-week.svg">',
             failureSummary:
               "Fix any of the following:\n  Element does not have an alt attribute"
           }
@@ -875,8 +903,17 @@ export default function Home() {
 
           <div className="sampleReportCard revealItem delayFour">
             <div>
-              <strong>Need to see the handoff flow first?</strong>
-              <p>Load a realistic sample with score, launch risk, top fixes, and client wording.</p>
+              <span className="sampleLabel">Demo handoff</span>
+              <strong>Preview a realistic client report first.</strong>
+              <p>
+                {sampleScenario.client} needs a {sampleScenario.pageType} check before a{" "}
+                {sampleScenario.deadline}.
+              </p>
+              <div className="sampleMeta" aria-label="Sample report context">
+                <span>Shopify page</span>
+                <span>4 issue groups</span>
+                <span>Client wording</span>
+              </div>
             </div>
             <button type="button" onClick={loadSampleReport}>
               Load sample report
@@ -921,8 +958,8 @@ export default function Home() {
               <span>Explain risks without audit jargon</span>
             </div>
             <div>
-              <strong>Report-ready</strong>
-              <span>Print today, saved exports next</span>
+              <strong>PDF-ready</strong>
+              <span>Download a report your client can read</span>
             </div>
           </div>
         </div>
@@ -1012,6 +1049,26 @@ export default function Home() {
 
       {result ? (
         <section className="results isVisible" aria-live="polite" id="issues" data-scroll-reveal>
+          {result.isSample ? (
+            <div className="sampleContext" data-scroll-reveal>
+              <div>
+                <p className="eyebrow">Demo scenario</p>
+                <h3>{sampleScenario.client} pre-handoff QA</h3>
+                <p>{sampleScenario.goal}</p>
+              </div>
+              <dl>
+                <div>
+                  <dt>Page</dt>
+                  <dd>{sampleScenario.pageType}</dd>
+                </div>
+                <div>
+                  <dt>Window</dt>
+                  <dd>{sampleScenario.deadline}</dd>
+                </div>
+              </dl>
+            </div>
+          ) : null}
+
           <div className="resultsHeader">
             <div>
               <p className="eyebrow">{result.isSample ? "Sample report" : "Scan complete"}</p>

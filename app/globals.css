@@ -728,12 +728,55 @@ button:disabled {
   font-weight: 700;
 }
 
+.sampleLabel {
+  display: inline-flex;
+  width: fit-content;
+  margin-bottom: 8px;
+  padding: 4px 8px;
+  color: var(--accent-strong);
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(15, 118, 110, 0.08);
+  border: 1px solid rgba(15, 118, 110, 0.14);
+  border-radius: 999px;
+}
+
 .sampleReportCard p {
   max-width: 520px;
   margin: 0;
   color: var(--muted);
   font-size: 0.88rem;
   line-height: 1.5;
+}
+
+.sampleMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 11px;
+}
+
+.sampleMeta span {
+  padding: 5px 8px;
+  color: var(--ink);
+  font-size: 0.76rem;
+  font-weight: 650;
+  background: color-mix(in srgb, var(--soft) 78%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+:root[data-theme="dark"] .sampleLabel {
+  color: var(--ink);
+  background: rgba(45, 212, 191, 0.08);
+  border-color: rgba(45, 212, 191, 0.16);
+}
+
+:root[data-theme="dark"] .sampleMeta span {
+  background: rgba(255, 255, 255, 0.045);
+  border-color: rgba(45, 212, 191, 0.14);
 }
 
 .sampleReportCard button {
@@ -1251,6 +1294,79 @@ button:disabled {
 
 .notice.error strong {
   color: var(--critical);
+}
+
+.sampleContext {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.72fr);
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 20px;
+  background:
+    linear-gradient(135deg, rgba(15, 118, 110, 0.1), rgba(255, 255, 255, 0.82)),
+    var(--surface);
+  border: 1px solid rgba(15, 118, 110, 0.18);
+  border-radius: 8px;
+}
+
+:root[data-theme="dark"] .sampleContext {
+  background:
+    linear-gradient(135deg, rgba(45, 212, 191, 0.11), rgba(17, 24, 39, 0.82)),
+    var(--surface);
+  border-color: rgba(45, 212, 191, 0.16);
+}
+
+.sampleContext h3 {
+  margin-bottom: 8px;
+  font-size: 1.48rem;
+  font-weight: 650;
+  line-height: 1.18;
+}
+
+.sampleContext p:not(.eyebrow) {
+  max-width: 700px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.56;
+}
+
+.sampleContext dl {
+  display: grid;
+  gap: 1px;
+  overflow: hidden;
+  margin: 0;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.sampleContext dl div {
+  display: grid;
+  gap: 5px;
+  min-height: 72px;
+  padding: 13px 14px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+:root[data-theme="dark"] .sampleContext dl div {
+  background: rgba(13, 17, 23, 0.58);
+}
+
+.sampleContext dt {
+  color: var(--accent-strong);
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sampleContext dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.92rem;
+  font-weight: 650;
+  line-height: 1.35;
 }
 
 .noticeHeader {
@@ -3116,6 +3232,7 @@ code {
   }
 
   .inputRow,
+  .sampleContext,
   .signalStrip,
   .summaryStrip,
   .handoffDecision,
