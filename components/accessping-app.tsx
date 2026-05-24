@@ -153,6 +153,27 @@ const priorityOrder: Record<Impact, number> = {
   minor: 3
 };
 
+const navItems = [
+  {
+    href: "#scanner",
+    id: "scanner",
+    label: "Scan",
+    helper: "Paste URL"
+  },
+  {
+    href: "#report",
+    id: "report",
+    label: "Score",
+    helper: "Live preview"
+  },
+  {
+    href: "#issues",
+    id: "issues",
+    label: "Fixes",
+    helper: "After scan"
+  }
+] as const;
+
 function getScoreStatus(score: number) {
   if (score >= 90) {
     return {
@@ -246,6 +267,7 @@ export default function Home() {
   const [leadEmail, setLeadEmail] = useState("");
   const [leadStatus, setLeadStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [leadMessage, setLeadMessage] = useState("");
+  const [activeSection, setActiveSection] = useState<(typeof navItems)[number]["id"]>("scanner");
   const displayScore = result ? result.score : isScanning ? 0 : 82;
   const scoreAngle = `${Math.max(0, Math.min(100, displayScore)) * 3.6}deg`;
   const resultDomain = result ? getDomain(result.url) : "";
@@ -290,6 +312,34 @@ export default function Home() {
 
     return () => observer.disconnect();
   }, [result, isScanning]);
+
+  useEffect(() => {
+    const sections = navItems
+      .map((item) => document.getElementById(item.id))
+      .filter((section): section is HTMLElement => Boolean(section));
+
+    if (!sections.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visibleEntry = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+        if (visibleEntry?.target.id) {
+          setActiveSection(visibleEntry.target.id as (typeof navItems)[number]["id"]);
+        }
+      },
+      {
+        rootMargin: "-24% 0px -58% 0px",
+        threshold: [0.08, 0.24, 0.48]
+      }
+    );
+
+    sections.forEach((section) => observer.observe(section));
+
+    return () => observer.disconnect();
+  }, [result]);
 
   function setThemeMode(isDark: boolean) {
     const nextTheme = isDark ? "dark" : "light";
@@ -426,9 +476,21 @@ export default function Home() {
             <strong>AccessPing</strong>
           </a>
           <nav className="topnav" aria-label="Product navigation">
-            <a href="#scanner">Scanner</a>
-            <a href="#report">Report</a>
-            <a href="#issues">Issues</a>
+            {navItems.map((item) => {
+              const isActive = activeSection === item.id;
+
+              return (
+                <a
+                  href={item.href}
+                  key={item.id}
+                  className={isActive ? "active" : ""}
+                  aria-current={isActive ? "location" : undefined}
+                >
+                  <span>{item.label}</span>
+                  <small>{item.helper}</small>
+                </a>
+              );
+            })}
           </nav>
           <div className="topStatus">
             <span aria-hidden="true" />
