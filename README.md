@@ -132,6 +132,10 @@ Recommended deploy path:
    - Print and Save as PDF
    - Lead capture in Supabase
 
+## QA Checklists
+
+- [Analytics event check](docs/analytics-event-check.md)
+
 ## Current MVP Limits
 
 - Scans one public page at a time.
@@ -139,4 +143,3 @@ Recommended deploy path:
 - Automated checks do not replace manual keyboard and screen reader QA.
 - PDF export currently uses the browser print dialog.
 - Payment/subscriptions are not implemented yet.
-
