@@ -28,6 +28,7 @@ type ScanResult = {
   issueCount: number;
   issues: ScanIssue[];
   pageTitle: string;
+  isSample?: boolean;
 };
 
 const exampleSites = [
@@ -172,6 +173,70 @@ const manualChecklist = [
     detail: "Test mobile width and 200% browser zoom without hidden or overlapping content."
   }
 ] as const;
+
+function createSampleResult(): ScanResult {
+  return {
+    url: "https://demo.accessping.app/agency-launch",
+    scannedAt: new Date().toISOString(),
+    score: 78,
+    summary: {
+      critical: 0,
+      serious: 1,
+      moderate: 1,
+      minor: 1
+    },
+    issueCount: 3,
+    pageTitle: "Agency launch page accessibility sample",
+    isSample: true,
+    issues: [
+      {
+        id: "color-contrast",
+        impact: "serious",
+        help: "Elements must meet minimum color contrast ratio thresholds",
+        description: "Ensure the contrast between foreground and background colors meets WCAG.",
+        helpUrl: "https://dequeuniversity.com/rules/axe/4.11/color-contrast",
+        nodes: [
+          {
+            target: [".hero-secondary-copy"],
+            html: '<p class="hero-secondary-copy">Launch faster with a cleaner handoff.</p>',
+            failureSummary:
+              "Fix any of the following:\n  Element has insufficient color contrast of 3.1:1"
+          }
+        ]
+      },
+      {
+        id: "button-name",
+        impact: "moderate",
+        help: "Buttons must have discernible text",
+        description: "Ensure every button has visible text or an accessible name.",
+        helpUrl: "https://dequeuniversity.com/rules/axe/4.11/button-name",
+        nodes: [
+          {
+            target: [".carousel-next"],
+            html: '<button class="carousel-next"><svg aria-hidden="true"></svg></button>',
+            failureSummary:
+              "Fix any of the following:\n  Element does not have inner text that is visible to screen readers"
+          }
+        ]
+      },
+      {
+        id: "image-alt",
+        impact: "minor",
+        help: "Images must have alternative text",
+        description: "Ensure meaningful images include concise alternative text.",
+        helpUrl: "https://dequeuniversity.com/rules/axe/4.11/image-alt",
+        nodes: [
+          {
+            target: [".case-study-logo"],
+            html: '<img class="case-study-logo" src="/logos/client-mark.svg">',
+            failureSummary:
+              "Fix any of the following:\n  Element does not have an alt attribute"
+          }
+        ]
+      }
+    ]
+  };
+}
 
 const navItems = [
   {
@@ -497,6 +562,23 @@ export default function Home() {
     }
   }
 
+  function loadSampleReport() {
+    const sampleResult = createSampleResult();
+    setError("");
+    setIsScanning(false);
+    setUrl(sampleResult.url);
+    setResult(sampleResult);
+    setLeadStatus("idle");
+    track("Sample Report Loaded", {
+      score: sampleResult.score,
+      issueCount: sampleResult.issueCount
+    });
+
+    window.setTimeout(() => {
+      document.getElementById("issues")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+  }
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     runScan(url);
@@ -653,6 +735,16 @@ export default function Home() {
             </p>
           </form>
 
+          <div className="sampleReportCard revealItem delayFour">
+            <div>
+              <strong>Want to see the full report first?</strong>
+              <p>Load a realistic sample with score, handoff decision, top fixes, and client wording.</p>
+            </div>
+            <button type="button" onClick={loadSampleReport}>
+              Load sample report
+            </button>
+          </div>
+
           <div className="examplesMarquee revealItem delayFour" aria-label="Example websites">
             <div className="marqueeTrack">
               {[...exampleSites, ...exampleSites].map((site, index) => (
@@ -763,12 +855,12 @@ export default function Home() {
         <section className="results" aria-live="polite" id="issues" data-scroll-reveal>
           <div className="resultsHeader">
             <div>
-              <p className="eyebrow">Scan complete</p>
+              <p className="eyebrow">{result.isSample ? "Sample report" : "Scan complete"}</p>
               <h2>{resultTitle}</h2>
               <span className="resultDomain">{resultDomain}</span>
               <p>
-                Scanned {formatScanDate(result.scannedAt)}. Found{" "}
-                {result.issueCount} issue groups to review before handoff.
+                {result.isSample ? "Demo generated" : "Scanned"} {formatScanDate(result.scannedAt)}.
+                Found {result.issueCount} issue groups to review before handoff.
               </p>
             </div>
             <div className="finalScore">
