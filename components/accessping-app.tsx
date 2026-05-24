@@ -224,6 +224,60 @@ function getTopPriorities(issues: ScanIssue[]) {
     .slice(0, 3);
 }
 
+function getHandoffDecision(result: ScanResult, topIssue?: ScanIssue) {
+  const guidance = topIssue ? issueGuidance[topIssue.id] || genericGuidance : null;
+
+  if (result.summary.critical > 0) {
+    return {
+      tone: "risk",
+      label: "Handoff should wait",
+      summary:
+        "This page has a critical access blocker. Fix it before sending the work to a client or putting the page behind paid traffic.",
+      firstAction: topIssue?.help || "Fix the critical blocker",
+      actionDetail: guidance?.fix || genericGuidance.fix,
+      clientWording:
+        "We found a blocker that can prevent some visitors from using the page. We should fix this before launch."
+    };
+  }
+
+  if (result.summary.serious > 0) {
+    return {
+      tone: "watch",
+      label: "Fix before client review",
+      summary:
+        "The page is usable, but the serious findings can create real friction. Clear these first so the report feels like proof, not a warning.",
+      firstAction: topIssue?.help || "Resolve the serious issue",
+      actionDetail: guidance?.fix || genericGuidance.fix,
+      clientWording:
+        "The page is close, but a few accessibility issues should be cleaned up before final approval."
+    };
+  }
+
+  if (result.issueCount > 0) {
+    return {
+      tone: "good",
+      label: "Good shape with follow-up fixes",
+      summary:
+        "No high-risk automated blockers were found. Treat the remaining items as polish before the final QA sign-off.",
+      firstAction: topIssue?.help || "Review the remaining issue",
+      actionDetail: guidance?.fix || genericGuidance.fix,
+      clientWording:
+        "The automated pass looks healthy. We found a small set of follow-up items to tighten before handoff."
+    };
+  }
+
+  return {
+    tone: "good",
+    label: "Clean automated first pass",
+    summary:
+      "The automated scan did not find issue groups. Finish the manual keyboard, screen reader, and zoom checks before calling it done.",
+    firstAction: "Run manual QA",
+    actionDetail: "Use the checklist below to catch issues automated scanners cannot confirm.",
+    clientWording:
+      "The automated accessibility pass is clean. We are doing a final manual QA check before handoff."
+  };
+}
+
 function formatScanDate(scannedAt: string) {
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
@@ -291,6 +345,7 @@ export default function Home() {
   const resultTitle = result ? cleanPageTitle(result.pageTitle, result.url) : "";
   const scoreStatus = result ? getScoreStatus(result.score) : null;
   const topPriorities = result ? getTopPriorities(result.issues) : [];
+  const handoffDecision = result ? getHandoffDecision(result, topPriorities[0]) : null;
   const reportId = result ? getReportId(result.scannedAt, result.url) : "";
   const primaryNextAction = result
     ? result.issueCount > 0
@@ -731,6 +786,27 @@ export default function Home() {
               </div>
             ))}
           </div>
+
+          {handoffDecision ? (
+            <div className={`handoffDecision ${handoffDecision.tone}`} data-scroll-reveal>
+              <div className="decisionCopy">
+                <p className="eyebrow">Handoff decision</p>
+                <h3>{handoffDecision.label}</h3>
+                <p>{handoffDecision.summary}</p>
+              </div>
+              <div className="decisionPanel">
+                <div>
+                  <span>First fix</span>
+                  <strong>{handoffDecision.firstAction}</strong>
+                  <p>{handoffDecision.actionDetail}</p>
+                </div>
+                <div>
+                  <span>Client wording</span>
+                  <p>{handoffDecision.clientWording}</p>
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           {scoreStatus ? (
             <div className={`clientBrief ${scoreStatus.tone}`} data-scroll-reveal>
