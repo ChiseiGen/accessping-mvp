@@ -970,6 +970,17 @@ export default function Home() {
           </div>
         </section>
       </section>
+
+      <footer className="siteFooter" aria-label="Site footer">
+        <div>
+          <strong>AccessPing</strong>
+          <p>Automated WCAG first pass for public pages.</p>
+        </div>
+        <nav aria-label="Legal links">
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
+        </nav>
+      </footer>
     </main>
   );
 }

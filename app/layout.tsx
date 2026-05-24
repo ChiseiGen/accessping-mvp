@@ -17,7 +17,7 @@ const robotoMono = Roboto_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://accessping.app"),
+  metadataBase: new URL("https://accessping-mvp.vercel.app"),
   title: {
     default: "AccessPing",
     template: "%s | AccessPing"

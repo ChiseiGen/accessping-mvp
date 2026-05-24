@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/api/"]
     },
-    sitemap: "https://accessping.app/sitemap.xml"
+    sitemap: "https://accessping-mvp.vercel.app/sitemap.xml"
   };
 }
