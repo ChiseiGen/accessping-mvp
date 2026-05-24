@@ -497,6 +497,7 @@ a {
 }
 
 .heroCopy {
+  min-width: 0;
   padding-top: 26px;
 }
 
@@ -2830,7 +2831,7 @@ code {
 
   .topbar {
     margin-bottom: 20px;
-    padding: max(5px, env(safe-area-inset-top)) 0 5px;
+    padding: calc(max(8px, env(safe-area-inset-top)) + 2px) 0 8px;
   }
 
   .topbarInner {
@@ -2884,17 +2885,22 @@ code {
     gap: 18px;
     min-height: auto;
     padding-top: 4px;
+    min-width: 0;
   }
 
   .heroCopy {
+    width: 100%;
+    min-width: 0;
     padding-top: 0;
   }
 
   h1 {
+    width: 100%;
     max-width: 100%;
     margin-bottom: 18px;
-    font-size: 2.72rem;
+    font-size: 2.34rem;
     line-height: 1.03;
+    overflow-wrap: break-word;
   }
 
   .lede {
@@ -2904,6 +2910,8 @@ code {
   }
 
   .scanForm {
+    width: 100%;
+    max-width: 100%;
     padding: 14px;
   }
 
@@ -2939,6 +2947,11 @@ code {
   .guidanceGrid,
   .skeletonGrid {
     grid-template-columns: 1fr;
+  }
+
+  .inputRow {
+    width: 100%;
+    max-width: 100%;
   }
 
   .reportCta {
