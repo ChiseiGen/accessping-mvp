@@ -13,6 +13,7 @@ Last updated: 2026-05-25
 | Scan success | `Scan Completed` | Complete a working scan, for example `https://example.com` | Event appears with `score` and `issueCount` |
 | Scan failure | `Scan Failed` | Try a URL that blocks automated scans or is invalid after form validation | Event appears when the API returns an error |
 | Demo activation | `Sample Report Loaded` | Click `Load sample report` | Event appears with sample `score` and `issueCount` |
+| PDF intent | `PDF Downloaded` | Click `Download PDF` from the report preview | Event appears after the PDF file starts downloading |
 | Report intent | `Report Printed` | Click `Print report` from the report preview | Event appears before the browser print dialog opens |
 | Lead capture | `Lead Captured` | Submit the early access form with an email | Event appears after the lead is saved |
 
@@ -53,23 +54,31 @@ Last updated: 2026-05-25
    Sample Report Loaded
    ```
 
-8. Click `Print report`, then cancel the print dialog if you do not need a PDF.
+8. Click `Download PDF`.
 
 9. Confirm this event appears:
+
+   ```text
+   PDF Downloaded
+   ```
+
+10. Click `Print report`, then cancel the print dialog if you do not need a PDF.
+
+11. Confirm this event appears:
 
    ```text
    Report Printed
    ```
 
-10. Submit the early access form with a test email.
+12. Submit the early access form with a test email.
 
-11. Confirm this event appears:
+13. Confirm this event appears:
 
    ```text
    Lead Captured
    ```
 
-12. Confirm the lead also appears in Supabase:
+14. Confirm the lead also appears in Supabase:
 
    ```text
    Supabase -> Table Editor -> leads
@@ -82,6 +91,7 @@ Analytics is considered working when:
 - The homepage pageview appears in Vercel Analytics.
 - `Scan Started` and `Scan Completed` appear after a successful scan.
 - `Sample Report Loaded` appears after clicking the sample report CTA.
+- `PDF Downloaded` appears after downloading a report PDF.
 - `Report Printed` appears after clicking the print CTA.
 - `Lead Captured` appears after a successful email submission.
 - Supabase receives the lead row that matches the submitted email.

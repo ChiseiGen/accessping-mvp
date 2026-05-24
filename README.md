@@ -8,6 +8,7 @@ AccessPing is a small SaaS MVP for running a fast accessibility first pass befor
 - Automated accessibility checks with `axe-core`
 - Access score with issue severity summary
 - Client-ready report preview
+- Direct PDF report download
 - Print dialog support for saving reports as PDF
 - Early-access lead capture
 - Supabase-backed lead storage with local fallback
@@ -129,7 +130,8 @@ Recommended deploy path:
 5. Test:
    - Website scan
    - Report preview
-   - Print and Save as PDF
+   - Download PDF
+   - Print and Save as PDF fallback
    - Lead capture in Supabase
 
 ## QA Checklists
@@ -141,5 +143,5 @@ Recommended deploy path:
 - Scans one public page at a time.
 - Some websites block automated scans.
 - Automated checks do not replace manual keyboard and screen reader QA.
-- PDF export currently uses the browser print dialog.
+- PDF export is available as an MVP server-generated report, with browser print kept as a fallback.
 - Payment/subscriptions are not implemented yet.

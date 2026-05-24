@@ -417,6 +417,7 @@ export default function Home() {
   const [leadEmail, setLeadEmail] = useState("");
   const [leadStatus, setLeadStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [leadMessage, setLeadMessage] = useState("");
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [activeSection, setActiveSection] = useState<(typeof navItems)[number]["id"]>("scanner");
   const displayScore = result ? result.score : isScanning ? 0 : 82;
   const scoreAngle = `${Math.max(0, Math.min(100, displayScore)) * 3.6}deg`;
@@ -601,6 +602,49 @@ export default function Home() {
   function printReport() {
     track("Report Printed");
     window.print();
+  }
+
+  async function downloadPdfReport() {
+    if (!result || isDownloadingPdf) return;
+
+    setIsDownloadingPdf(true);
+
+    try {
+      const response = await fetch("/api/report/pdf", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(result)
+      });
+
+      if (!response.ok) {
+        throw new Error("The PDF report could not be generated.");
+      }
+
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const domain = resultDomain.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase();
+
+      link.href = objectUrl;
+      link.download = `accessping-${domain || "report"}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+      track("PDF Downloaded", {
+        score: result.score,
+        issueCount: result.issueCount
+      });
+    } catch {
+      setError("The PDF report could not be downloaded. Try Print report instead.");
+      window.setTimeout(() => {
+        document.querySelector(".notice.error")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 80);
+    } finally {
+      setIsDownloadingPdf(false);
+    }
   }
 
   async function submitLead(event: FormEvent<HTMLFormElement>) {
@@ -1111,6 +1155,9 @@ export default function Home() {
               </p>
             </div>
             <div className="ctaActions" aria-label="Planned report actions">
+              <button type="button" onClick={downloadPdfReport} disabled={isDownloadingPdf}>
+                {isDownloadingPdf ? "Preparing PDF..." : "Download PDF"}
+              </button>
               <button type="button" onClick={printReport}>
                 Print report
               </button>
