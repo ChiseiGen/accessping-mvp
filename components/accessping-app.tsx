@@ -328,11 +328,13 @@ export default function Home() {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (window.location.hash) return;
-
         const visibleEntry = entries
           .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+          .sort(
+            (a, b) =>
+              Math.abs(a.boundingClientRect.top - 96) -
+              Math.abs(b.boundingClientRect.top - 96)
+          )[0];
 
         if (visibleEntry?.target.id) {
           setActiveSection(visibleEntry.target.id as (typeof navItems)[number]["id"]);
@@ -442,9 +444,13 @@ export default function Home() {
         throw new Error(payload.error || "The email could not be saved.");
       }
 
-      const existingLeads = JSON.parse(
-        window.localStorage.getItem("accessping-leads") || "[]"
-      ) as Array<typeof leadPayload & { createdAt: string }>;
+      let existingLeads: Array<typeof leadPayload & { createdAt: string }> = [];
+
+      try {
+        existingLeads = JSON.parse(window.localStorage.getItem("accessping-leads") || "[]");
+      } catch {
+        existingLeads = [];
+      }
 
       const nextLeads = [
         ...existingLeads.filter((lead) => lead.email !== trimmedEmail),
@@ -534,14 +540,14 @@ export default function Home() {
                 type="url"
                 value={url}
                 onChange={(event) => setUrl(event.target.value)}
-                placeholder="https://yourwebsite.com..."
+                placeholder="https://yourwebsite.com…"
                 autoComplete="off"
                 inputMode="url"
                 spellCheck={false}
                 required
               />
               <button type="submit" disabled={isScanning}>
-                {isScanning ? "Scanning..." : "Scan site"}
+                {isScanning ? "Scanning…" : "Scan site"}
               </button>
             </div>
             <p className="hint">
@@ -856,7 +862,11 @@ export default function Home() {
               </p>
             </div>
             <div className="leadForm">
+              <label className="srOnly" htmlFor="lead-email">
+                Email address
+              </label>
               <input
+                id="lead-email"
                 type="email"
                 name="email"
                 value={leadEmail}
@@ -865,21 +875,23 @@ export default function Home() {
                   setLeadStatus("idle");
                   setLeadMessage("");
                 }}
-                placeholder="you@agency.com..."
+                placeholder="you@agency.com…"
                 autoComplete="email"
                 spellCheck={false}
-                aria-label="Email address"
                 required
               />
               <button type="submit" disabled={leadStatus === "saving"}>
                 {leadStatus === "saving"
-                  ? "Saving..."
+                  ? "Saving…"
                   : leadStatus === "saved"
                     ? "Saved"
                     : "Get early access"}
               </button>
               {leadMessage ? (
-                <p className={leadStatus === "error" ? "leadError" : ""} role="status">
+                <p
+                  className={leadStatus === "error" ? "leadError" : ""}
+                  role={leadStatus === "error" ? "alert" : "status"}
+                >
                   {leadMessage}
                 </p>
               ) : null}

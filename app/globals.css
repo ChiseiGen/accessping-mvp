@@ -149,6 +149,18 @@ a {
   pointer-events: auto;
 }
 
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .shell {
   width: min(1200px, calc(100% - 32px));
   margin: 0 auto;
@@ -1893,6 +1905,8 @@ code {
   display: grid;
   gap: 22px;
   margin-top: 32px;
+  content-visibility: auto;
+  contain-intrinsic-size: 1200px;
 }
 
 .problemBand {
@@ -2148,6 +2162,8 @@ code {
   display: grid;
   gap: 0;
   margin-top: 28px;
+  content-visibility: auto;
+  contain-intrinsic-size: 760px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 8px;
