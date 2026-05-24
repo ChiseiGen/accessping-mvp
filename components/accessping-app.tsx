@@ -407,6 +407,74 @@ function scrollToResults() {
   }, 120);
 }
 
+function getScanFailureCopy(message: string) {
+  const lowerMessage = message.toLowerCase();
+
+  if (
+    lowerMessage.includes("http 401") ||
+    lowerMessage.includes("http 403") ||
+    lowerMessage.includes("http 429") ||
+    lowerMessage.includes("block")
+  ) {
+    return {
+      title: "This site blocked the automated scan",
+      summary:
+        "Some production sites block automated visitors, rate-limit requests, or require browser security checks before showing the page.",
+      detail: "The scanner received this response: " + message,
+      nextSteps: [
+        "Try a public page from the same site that does not sit behind bot protection.",
+        "Use the sample report to preview the client handoff flow.",
+        "For a real client, note this as a manual review candidate instead of treating it as a broken report."
+      ]
+    };
+  }
+
+  if (
+    lowerMessage.includes("could not reach") ||
+    lowerMessage.includes("timeout") ||
+    lowerMessage.includes("fetch failed") ||
+    lowerMessage.includes("network")
+  ) {
+    return {
+      title: "The scanner could not reach this page",
+      summary:
+        "The URL may be private, temporarily unavailable, too slow to respond, or blocking server-side requests.",
+      detail: "The scanner received this response: " + message,
+      nextSteps: [
+        "Check that the URL opens in a normal browser tab.",
+        "Scan the homepage or another public page from the same domain.",
+        "If the site is private, use the sample report until authenticated scans are supported."
+      ]
+    };
+  }
+
+  if (lowerMessage.includes("html")) {
+    return {
+      title: "This URL is not a scannable web page",
+      summary:
+        "AccessPing can only run this first-pass scan on public HTML pages. Files, redirects, PDFs, images, and API responses are outside this MVP flow.",
+      detail: "The scanner received this response: " + message,
+      nextSteps: [
+        "Use a normal website page URL, not a file or API endpoint.",
+        "Try the homepage, pricing page, or product page.",
+        "Load the sample report to see the output format."
+      ]
+    };
+  }
+
+  return {
+    title: "The scan could not be completed",
+    summary:
+      "The page did not return a result the scanner can safely turn into a report yet. This can happen with redirects, strict hosting rules, or unusual page responses.",
+    detail: "The scanner received this response: " + message,
+    nextSteps: [
+      "Try another public page from the same website.",
+      "Use one of the suggested sample domains.",
+      "Load the sample report if you only want to review the report workflow."
+    ]
+  };
+}
+
 export default function Home() {
   const previewRef = useRef<HTMLElement | null>(null);
   const [url, setUrl] = useState("");
@@ -437,6 +505,7 @@ export default function Home() {
       ? "Finish the manual QA pass, then keep the report preview as launch proof."
       : "Use the checklist and report preview to explain what needs attention before handoff."
     : "";
+  const scanFailure = error ? getScanFailureCopy(error) : null;
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem("accessping-theme");
@@ -899,14 +968,35 @@ export default function Home() {
         </aside>
       </section>
 
-      {error ? (
+      {scanFailure ? (
         <section className="notice error" role="alert" data-scroll-reveal>
-          <strong>Scan failed</strong>
-          <p>{error}</p>
-          <p>
-            Try one of the sample sites above. Some websites block automated checks
-            or return pages this local MVP cannot read yet.
-          </p>
+          <div className="noticeHeader">
+            <span aria-hidden="true" />
+            <div>
+              <strong>{scanFailure.title}</strong>
+              <p>{scanFailure.summary}</p>
+            </div>
+          </div>
+          <details className="scanFailureDetails">
+            <summary>Show scanner response</summary>
+            <p>{scanFailure.detail}</p>
+          </details>
+          <div className="nextStepList" aria-label="Suggested next steps">
+            {scanFailure.nextSteps.map((step) => (
+              <div key={step}>
+                <span aria-hidden="true" />
+                {step}
+              </div>
+            ))}
+          </div>
+          <div className="noticeActions">
+            <button type="button" onClick={() => runScan(url)} disabled={isScanning || !url.trim()}>
+              Try again
+            </button>
+            <button type="button" className="secondaryAction" onClick={loadSampleReport}>
+              View sample report
+            </button>
+          </div>
         </section>
       ) : null}
 
