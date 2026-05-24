@@ -162,8 +162,8 @@ a {
   width: 100vw;
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
-  margin-bottom: 26px;
-  padding: max(8px, env(safe-area-inset-top)) 0 8px;
+  margin-bottom: 22px;
+  padding: max(4px, env(safe-area-inset-top)) 0 4px;
   background: rgba(246, 247, 244, 0.88);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid rgba(201, 211, 193, 0.88);
@@ -175,7 +175,7 @@ a {
   grid-template-columns: 1fr auto auto auto;
   gap: 18px;
   align-items: center;
-  min-height: 62px;
+  min-height: 52px;
   width: min(1200px, calc(100% - 32px));
   margin: 0 auto;
 }
@@ -221,9 +221,9 @@ a {
 .topnav {
   position: relative;
   display: inline-flex;
-  gap: 6px;
+  gap: 3px;
   align-items: center;
-  padding: 6px;
+  padding: 3px;
   background: rgba(255, 255, 255, 0.74);
   border: 1px solid rgba(201, 211, 193, 0.72);
   border-radius: 10px;
@@ -239,13 +239,12 @@ a {
 .topnav a {
   position: relative;
   display: grid;
-  gap: 2px;
-  min-width: 96px;
-  min-height: 48px;
+  min-width: 78px;
+  min-height: 34px;
   align-content: center;
-  padding: 7px 13px;
+  padding: 7px 13px 8px;
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.88rem;
   font-weight: 600;
   border: 1px solid transparent;
   border-radius: 8px;
@@ -254,17 +253,9 @@ a {
 
 .topnav a span {
   color: inherit;
-  font-size: 0.92rem;
-  font-weight: 750;
+  font-size: 0.88rem;
+  font-weight: 700;
   line-height: 1.1;
-}
-
-.topnav a small {
-  color: color-mix(in srgb, var(--muted) 82%, transparent);
-  font-size: 0.66rem;
-  font-weight: 600;
-  line-height: 1.15;
-  white-space: nowrap;
 }
 
 .topnav a::after {
@@ -272,7 +263,7 @@ a {
   position: absolute;
   left: 12px;
   right: 12px;
-  bottom: 5px;
+  bottom: 4px;
   height: 2px;
   background: var(--accent);
   border-radius: 999px;
@@ -2505,7 +2496,7 @@ code {
 
   .topbar {
     margin-bottom: 20px;
-    padding: max(7px, env(safe-area-inset-top)) 0 7px;
+    padding: max(5px, env(safe-area-inset-top)) 0 5px;
   }
 
   .topbarInner {
@@ -2546,17 +2537,13 @@ code {
   .topnav a {
     flex: 1 0 0;
     min-width: 0;
-    min-height: 46px;
-    padding: 7px 9px;
+    min-height: 36px;
+    padding: 8px 9px;
     text-align: center;
   }
 
   .topnav a span {
     font-size: 0.86rem;
-  }
-
-  .topnav a small {
-    font-size: 0.61rem;
   }
 
   .hero {

@@ -157,20 +157,17 @@ const navItems = [
   {
     href: "#scanner",
     id: "scanner",
-    label: "Scan",
-    helper: "Paste URL"
+    label: "Scan"
   },
   {
     href: "#report",
     id: "report",
-    label: "Score",
-    helper: "Live preview"
+    label: "Score"
   },
   {
     href: "#issues",
     id: "issues",
-    label: "Fixes",
-    helper: "After scan"
+    label: "Fixes"
   }
 ] as const;
 
@@ -487,7 +484,6 @@ export default function Home() {
                   aria-current={isActive ? "location" : undefined}
                 >
                   <span>{item.label}</span>
-                  <small>{item.helper}</small>
                 </a>
               );
             })}
