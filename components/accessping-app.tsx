@@ -154,6 +154,25 @@ const priorityOrder: Record<Impact, number> = {
   minor: 3
 };
 
+const manualChecklist = [
+  {
+    title: "Keyboard path",
+    detail: "Tab through the page and confirm every interactive element is reachable."
+  },
+  {
+    title: "Visible focus",
+    detail: "Check that links, buttons, inputs, and menus show a clear focus state."
+  },
+  {
+    title: "Screen reader labels",
+    detail: "Review buttons, forms, and images with a screen reader or accessibility tree."
+  },
+  {
+    title: "Responsive zoom",
+    detail: "Test mobile width and 200% browser zoom without hidden or overlapping content."
+  }
+] as const;
+
 const navItems = [
   {
     href: "#scanner",
@@ -273,6 +292,16 @@ export default function Home() {
   const scoreStatus = result ? getScoreStatus(result.score) : null;
   const topPriorities = result ? getTopPriorities(result.issues) : [];
   const reportId = result ? getReportId(result.scannedAt, result.url) : "";
+  const primaryNextAction = result
+    ? result.issueCount > 0
+      ? "Fix the highest-risk issue, then rerun the scan."
+      : "Run the manual QA checklist before sending this as proof."
+    : "";
+  const secondaryNextAction = result
+    ? result.score >= 90
+      ? "Print the report and keep it with the launch notes."
+      : "Use the report preview to explain what needs attention before handoff."
+    : "";
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem("accessping-theme");
@@ -760,6 +789,25 @@ export default function Home() {
             </div>
           ) : null}
 
+          {result ? (
+            <section className="nextActionCard" aria-label="Recommended next action" data-scroll-reveal>
+              <div>
+                <p className="eyebrow">Next action</p>
+                <h3>{primaryNextAction}</h3>
+                <p>{secondaryNextAction}</p>
+              </div>
+              <div className="nextActionSteps">
+                <a href={topPriorities.length > 0 ? "#top-fixes" : "#manual-qa"}>
+                  {topPriorities.length > 0 ? "Review top fixes" : "Open manual QA"}
+                </a>
+                <button type="button" onClick={printReport}>
+                  Print report
+                </button>
+                <a href="#early-access">Get report updates</a>
+              </div>
+            </section>
+          ) : null}
+
           {scoreStatus ? (
             <article className="auditReport" aria-label="Client-ready accessibility report" data-scroll-reveal>
               <div className="auditReportHeader">
@@ -809,7 +857,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="reportPriorityBlock">
+              <div className="reportPriorityBlock" id="top-fixes">
                 <div className="sectionHeading">
                   <span>Top fixes to address</span>
                   <small>Ordered by launch risk</small>
@@ -847,6 +895,27 @@ export default function Home() {
             </article>
           ) : null}
 
+          <section className="manualQaChecklist" id="manual-qa" aria-label="Manual QA checklist" data-scroll-reveal>
+            <div className="sectionHeading">
+              <div>
+                <span>Manual QA checklist</span>
+                <small>Do this before final sign-off</small>
+              </div>
+              <p>Automated scans catch common issues. These checks cover the human review pass.</p>
+            </div>
+            <div className="checklistGrid">
+              {manualChecklist.map((item, index) => (
+                <article key={item.title}>
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                  <div>
+                    <strong>{item.title}</strong>
+                    <p>{item.detail}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+
           <div className="reportCta" data-scroll-reveal>
             <div>
               <p className="eyebrow">Report preview</p>
@@ -866,7 +935,7 @@ export default function Home() {
             </div>
           </div>
 
-          <form className="leadCapture" onSubmit={submitLead} data-scroll-reveal>
+          <form className="leadCapture" id="early-access" onSubmit={submitLead} data-scroll-reveal>
             <div>
               <p className="eyebrow">Early access</p>
               <h3>Want the full report flow when it ships?</h3>
