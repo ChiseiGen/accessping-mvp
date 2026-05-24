@@ -103,6 +103,14 @@ const genericGuidance = {
   fix: "Review the affected element, follow the WCAG help link, and retest after the markup or content is updated."
 };
 
+const trustDisclaimer = {
+  title: "Automated first pass, not a full audit",
+  summary:
+    "AccessPing checks common WCAG issues that can be detected from a public page. Use it to catch launch risks early, then finish with manual keyboard, screen reader, zoom, and content review before final sign-off.",
+  proof:
+    "Evidence shown here comes from automated rule results, affected selectors, and page markup available to the scanner."
+};
+
 const issueGuidance: Record<string, typeof genericGuidance> = {
   "link-name": {
     meaning: "One or more links do not have readable text or an accessible name.",
@@ -1030,6 +1038,14 @@ export default function Home() {
             ))}
           </div>
 
+          <aside className="trustNote" aria-label="Report accuracy note" data-scroll-reveal>
+            <span aria-hidden="true" />
+            <div>
+              <strong>{trustDisclaimer.title}</strong>
+              <p>{trustDisclaimer.summary}</p>
+            </div>
+          </aside>
+
           {handoffDecision ? (
             <div className={`handoffDecision ${handoffDecision.tone}`} data-scroll-reveal>
               <div className="decisionCopy">
@@ -1174,6 +1190,12 @@ export default function Home() {
                     manual keyboard and screen reader review before final approval.
                   </p>
                 </div>
+              </div>
+
+              <div className="reportTrustNote">
+                <span>{trustDisclaimer.title}</span>
+                <p>{trustDisclaimer.summary}</p>
+                <small>{trustDisclaimer.proof}</small>
               </div>
 
               <div className="reportPriorityBlock" id="top-fixes">
