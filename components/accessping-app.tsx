@@ -317,8 +317,19 @@ export default function Home() {
 
     if (!sections.length) return;
 
+    function setActiveFromHash() {
+      const hashId = window.location.hash.replace("#", "");
+      const matchingItem = navItems.find((item) => item.id === hashId);
+
+      if (matchingItem) {
+        setActiveSection(matchingItem.id);
+      }
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
+        if (window.location.hash) return;
+
         const visibleEntry = entries
           .filter((entry) => entry.isIntersecting)
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
@@ -334,8 +345,13 @@ export default function Home() {
     );
 
     sections.forEach((section) => observer.observe(section));
+    setActiveFromHash();
+    window.addEventListener("hashchange", setActiveFromHash);
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("hashchange", setActiveFromHash);
+    };
   }, [result]);
 
   function setThemeMode(isDark: boolean) {
@@ -440,7 +456,7 @@ export default function Home() {
 
       window.localStorage.setItem("accessping-leads", JSON.stringify(nextLeads));
       setLeadStatus("saved");
-      setLeadMessage("Saved. This lead is now captured by the MVP backend.");
+      setLeadMessage(payload.message || "You are on the early access list.");
     } catch (leadError) {
       setLeadStatus("error");
       setLeadMessage(
@@ -482,6 +498,7 @@ export default function Home() {
                   key={item.id}
                   className={isActive ? "active" : ""}
                   aria-current={isActive ? "location" : undefined}
+                  onClick={() => setActiveSection(item.id)}
                 >
                   <span>{item.label}</span>
                 </a>

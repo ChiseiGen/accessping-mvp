@@ -76,13 +76,13 @@ async function saveLead(lead: LeadRecord) {
       created_at: lead.createdAt
     };
 
-    const response = await fetch(supabase.restUrl, {
+    const response = await fetch(`${supabase.restUrl}?on_conflict=email`, {
       method: "POST",
       headers: {
         apikey: supabase.serviceRoleKey,
         Authorization: `Bearer ${supabase.serviceRoleKey}`,
         "Content-Type": "application/json",
-        Prefer: "return=minimal"
+        Prefer: "resolution=merge-duplicates,return=minimal"
       },
       body: JSON.stringify(supabaseLead),
       cache: "no-store"
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         ok: true,
-        message: "Lead saved."
+        message: "You are on the early access list."
       },
       {
         status: 201,
