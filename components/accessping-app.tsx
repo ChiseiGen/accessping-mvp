@@ -2,6 +2,7 @@
 
 import { CSSProperties, FormEvent, MouseEvent, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import { track } from "@vercel/analytics";
 import SwitchToggleThemeDemo from "@/components/ui/toggle-theme";
 
 type Impact = "critical" | "serious" | "moderate" | "minor";
@@ -379,6 +380,9 @@ export default function Home() {
     setError("");
     setIsScanning(true);
     setResult(null);
+    track("Scan Started", {
+      source: "scanner_form"
+    });
 
     try {
       const response = await fetch("/api/scan", {
@@ -397,8 +401,13 @@ export default function Home() {
 
       setResult(payload);
       setLeadStatus("idle");
+      track("Scan Completed", {
+        score: payload.score,
+        issueCount: payload.issueCount
+      });
     } catch (scanError) {
       setError(scanError instanceof Error ? scanError.message : "The scan failed.");
+      track("Scan Failed");
     } finally {
       setIsScanning(false);
     }
@@ -410,6 +419,7 @@ export default function Home() {
   }
 
   function printReport() {
+    track("Report Printed");
     window.print();
   }
 
@@ -463,6 +473,10 @@ export default function Home() {
       window.localStorage.setItem("accessping-leads", JSON.stringify(nextLeads));
       setLeadStatus("saved");
       setLeadMessage(payload.message || "You are on the early access list.");
+      track("Lead Captured", {
+        score: result?.score ?? null,
+        issueCount: result?.issueCount ?? null
+      });
     } catch (leadError) {
       setLeadStatus("error");
       setLeadMessage(
