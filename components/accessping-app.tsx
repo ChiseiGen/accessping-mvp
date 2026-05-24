@@ -701,11 +701,11 @@ export default function Home() {
 
       <section className="hero">
         <div className="heroCopy" id="scanner">
-          <p className="eyebrow revealItem">Pre-handoff accessibility check</p>
-          <h1 className="revealItem delayOne">Find access issues before your client does.</h1>
+          <p className="eyebrow revealItem">For freelancers, agencies, and web teams</p>
+          <h1 className="revealItem delayOne">Run an accessibility check before client handoff.</h1>
           <p className="lede revealItem delayTwo">
-            Run a fast WCAG first pass on any public page, then turn the findings into
-            a clear fix list your team can use before launch.
+            Paste a public page, catch common WCAG issues, and turn the result into
+            a fix list your client can understand before launch review.
           </p>
 
           <form className="scanForm revealItem delayThree" onSubmit={handleSubmit}>
@@ -731,14 +731,14 @@ export default function Home() {
               </button>
             </div>
             <p className="hint">
-              One public page only. Results stay in this browser session.
+              Built for pre-launch reviews. One public page only, with results kept in this session.
             </p>
           </form>
 
           <div className="sampleReportCard revealItem delayFour">
             <div>
-              <strong>Want to see the full report first?</strong>
-              <p>Load a realistic sample with score, handoff decision, top fixes, and client wording.</p>
+              <strong>Need to see the handoff flow first?</strong>
+              <p>Load a realistic sample with score, launch risk, top fixes, and client wording.</p>
             </div>
             <button type="button" onClick={loadSampleReport}>
               Load sample report
@@ -775,16 +775,16 @@ export default function Home() {
 
           <div className="signalStrip revealItem delayFive" aria-label="MVP capabilities">
             <div>
-              <strong>WCAG first pass</strong>
-              <span>Catch common blockers fast</span>
+              <strong>Before handoff</strong>
+              <span>Check the page before client review</span>
             </div>
             <div>
-              <strong>No saved data</strong>
-              <span>Private by default</span>
+              <strong>Client-safe wording</strong>
+              <span>Explain risks without audit jargon</span>
             </div>
             <div>
-              <strong>Client report</strong>
-              <span>Print today, export next</span>
+              <strong>Report-ready</strong>
+              <span>Print today, saved exports next</span>
             </div>
           </div>
         </div>
@@ -1106,10 +1106,10 @@ export default function Home() {
           <form className="leadCapture" id="early-access" onSubmit={submitLead} data-scroll-reveal>
             <div>
               <p className="eyebrow">Early access</p>
-              <h3>Want the full report flow when it ships?</h3>
+              <h3>Want saved reports for your next client handoff?</h3>
               <p>
-                Join the early list for email export, saved reports, and weekly
-                client-site monitoring.
+                Join the early list for PDF export, report history, and weekly
+                checks for client sites you already manage.
               </p>
             </div>
             <div className="leadForm">
@@ -1207,11 +1207,12 @@ export default function Home() {
       <section className="landingSections" aria-label="Product details">
         <div className="problemBand" data-scroll-reveal>
           <p className="eyebrow">The problem</p>
-          <h2>Client sites can look finished while still blocking real visitors.</h2>
+          <h2>The page can look done while the handoff is still risky.</h2>
           <p>
-            Agencies and freelancers often catch accessibility late, after QA, feedback,
-            or launch pressure. AccessPing gives you a quick first pass before the page
-            becomes a client problem.
+            Freelancers and agencies are usually judged on what clients notice late:
+            broken navigation, unreadable text, unclear buttons, and messy launch QA.
+            AccessPing gives you a fast accessibility first pass before those issues
+            become a client conversation.
           </p>
         </div>
 
@@ -1222,29 +1223,29 @@ export default function Home() {
               <div>
                 <span>01</span>
                 <strong>Paste a page URL</strong>
-                <p>Run an automated WCAG first pass against one public page.</p>
+                <p>Run an automated WCAG first pass on a public page before review.</p>
               </div>
               <div>
                 <span>02</span>
-                <strong>Review the launch risks</strong>
-                <p>See severity, affected elements, and fixes written in plain language.</p>
+                <strong>See what could block handoff</strong>
+                <p>Review severity, affected elements, and plain-English fix guidance.</p>
               </div>
               <div>
                 <span>03</span>
-                <strong>Send a clearer handoff</strong>
-                <p>Use the fix list now, then turn scans into reusable client reports.</p>
+                <strong>Walk into review prepared</strong>
+                <p>Use the fix list now, then package results into reusable client reports.</p>
               </div>
             </div>
           </article>
 
           <article className="infoPanel" data-scroll-reveal>
             <p className="eyebrow">Who it is for</p>
-            <h3>Built for people who need to ship clean client work.</h3>
+            <h3>For people who ship websites under client pressure.</h3>
             <ul className="audienceList">
-              <li>Webflow freelancers</li>
-              <li>Shopify agencies</li>
-              <li>WordPress developers</li>
-              <li>Small SaaS teams</li>
+              <li>Webflow freelancers before handoff</li>
+              <li>Shopify agencies before launch QA</li>
+              <li>WordPress developers before approval</li>
+              <li>Small SaaS teams before release</li>
             </ul>
           </article>
         </div>
@@ -1252,11 +1253,11 @@ export default function Home() {
         <section className="pricingSection" aria-label="Early access pricing" data-scroll-reveal>
           <div className="pricingIntro">
             <p className="eyebrow">Early access offer</p>
-            <h2>Start free. Upgrade when reports save client-review time.</h2>
+            <h2>Start with a free scan. Upgrade when handoffs need proof.</h2>
             <p>
-              AccessPing is free while the MVP is being shaped. These tiers show the
-              direction: faster checks for solo builders, reusable reports for teams,
-              and monitoring for agencies managing client sites.
+              AccessPing is free while the MVP is being shaped. The paid direction is
+              simple: saved reports, cleaner PDF exports, and recurring checks for
+              client sites that keep changing after launch.
             </p>
           </div>
 
@@ -1265,7 +1266,7 @@ export default function Home() {
               <div>
                 <span className="planLabel">Free</span>
                 <h3>First pass</h3>
-                <p>For quick pre-launch checks on one-off pages.</p>
+                <p>For quick checks before a one-page handoff.</p>
               </div>
               <strong>$0</strong>
               <ul>
@@ -1279,8 +1280,8 @@ export default function Home() {
             <article className="pricePlan featured">
               <div>
                 <span className="planLabel">Pro</span>
-                <h3>Report export</h3>
-                <p>For freelancers who want cleaner handoffs without rebuilding reports.</p>
+                <h3>Client handoff</h3>
+                <p>For freelancers who want cleaner reports without rebuilding them manually.</p>
               </div>
               <strong>$12<span>/mo</span></strong>
               <ul>
@@ -1288,14 +1289,14 @@ export default function Home() {
                 <li>Email export and report history</li>
                 <li>Fix-plan templates for common issues</li>
               </ul>
-              <a href="#issues">Get early access</a>
+              <a href="#early-access">Get early access</a>
             </article>
 
             <article className="pricePlan">
               <div>
                 <span className="planLabel">Agency</span>
-                <h3>Client monitoring</h3>
-                <p>For teams checking multiple sites before retainers and launches.</p>
+                <h3>Site monitoring</h3>
+                <p>For teams checking multiple client sites before launches and retainers.</p>
               </div>
               <strong>$39<span>/mo</span></strong>
               <ul>
@@ -1303,7 +1304,7 @@ export default function Home() {
                 <li>Branded report exports</li>
                 <li>Priority dashboard for fixes</li>
               </ul>
-              <a href="#issues">Request agency access</a>
+              <a href="#early-access">Request agency access</a>
             </article>
           </div>
         </section>
