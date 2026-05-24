@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readFileSync } from "fs";
-import { createRequire } from "module";
+import path from "path";
 import { JSDOM } from "jsdom";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
 const SCAN_TIMEOUT_MS = 15000;
-const require = createRequire(import.meta.url);
 let axeSourceCache: string | null = null;
 
 function getAxeSource() {
-  axeSourceCache ??= readFileSync(require.resolve("axe-core/axe.min.js"), "utf8");
+  axeSourceCache ??= readFileSync(
+    path.join(process.cwd(), "public", "axe.min.js"),
+    "utf8"
+  );
   return axeSourceCache;
 }
 
