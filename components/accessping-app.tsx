@@ -183,9 +183,9 @@ const manualChecklist = [
 ] as const;
 
 const leadBenefits = [
-  "PDF export when the beta opens",
-  "Saved report history for repeat clients",
-  "Fix-plan templates for common accessibility issues"
+  "Saved client reports for repeat handoffs",
+  "Reusable fix plans for common WCAG issues",
+  "Launch-review templates for agencies and freelancers"
 ] as const;
 
 const sampleScenario = {
@@ -802,7 +802,7 @@ export default function Home() {
       setLeadStatus("saved");
       setLeadMessage(
         payload.message ||
-          "You are on the beta list. I will send the PDF export and saved-report flow when it opens."
+          "You are on the beta list. I will send saved reports and fix-plan workflow updates when they open."
       );
       track("Lead Captured", {
         score: result?.score ?? null,
@@ -1183,7 +1183,7 @@ export default function Home() {
                 <a href={topPriorities.length > 0 ? "#manual-qa" : "#report-preview"}>
                   {topPriorities.length > 0 ? "Manual QA checklist" : "Open report preview"}
                 </a>
-                <a href="#early-access">Get report updates</a>
+                <a href="#early-access">Join report beta</a>
               </div>
             </section>
           ) : null}
@@ -1304,33 +1304,33 @@ export default function Home() {
 
           <div className="reportCta" id="report-preview" data-scroll-reveal>
             <div>
-              <p className="eyebrow">Report preview</p>
-              <h3>Turn this scan into proof your client can understand.</h3>
+              <p className="eyebrow">Report handoff</p>
+              <h3>Download the client-ready PDF, then save the workflow.</h3>
               <p>
-                Package the score, priority fixes, affected elements, and plain-English
-                guidance into a report you can attach to a launch review.
+                Use this report for today&apos;s handoff. Join the beta if you want saved
+                reports, fix-plan templates, and repeat checks for future client work.
               </p>
             </div>
             <div className="ctaActions" aria-label="Planned report actions">
               <button type="button" onClick={downloadPdfReport} disabled={isDownloadingPdf}>
-                {isDownloadingPdf ? "Preparing PDF..." : "Download PDF"}
+                {isDownloadingPdf ? "Preparing PDF..." : "Download report PDF"}
               </button>
               <button type="button" onClick={printReport}>
                 Print report
               </button>
               <button type="button" disabled>
-                Create fix plan soon
+                Fix plan builder soon
               </button>
             </div>
           </div>
 
           <form className="leadCapture" id="early-access" onSubmit={submitLead} data-scroll-reveal>
             <div>
-              <p className="eyebrow">Early access beta</p>
-              <h3>Get the report workflow when it becomes more than a preview.</h3>
+              <p className="eyebrow">Report workflow beta</p>
+              <h3>Want this scan saved for the next client review?</h3>
               <p>
-                Join the beta list for PDF export, saved client reports, and reusable fix
-                templates built around the handoff flow you just tested.
+                Join the beta list to get saved reports, fix-plan templates, and launch
+                review reminders built around the handoff flow you just tested.
               </p>
               <ul className="leadBenefits" aria-label="Early access benefits">
                 {leadBenefits.map((benefit) => (
@@ -1339,7 +1339,7 @@ export default function Home() {
               </ul>
             </div>
             <div className="leadForm">
-              <span className="leadFormLabel">Reserve early access</span>
+              <span className="leadFormLabel">Work email</span>
               <label className="srOnly" htmlFor="lead-email">
                 Email address
               </label>
@@ -1353,19 +1353,19 @@ export default function Home() {
                   setLeadStatus("idle");
                   setLeadMessage("");
                 }}
-                placeholder="you@agency.com…"
+                placeholder="you@agency.com"
                 autoComplete="email"
                 spellCheck={false}
                 required
               />
               <button type="submit" disabled={leadStatus === "saving"}>
                 {leadStatus === "saving"
-                  ? "Saving…"
+                  ? "Saving..."
                   : leadStatus === "saved"
-                    ? "Saved"
-                    : "Send me the report beta"}
+                    ? "You're on the list"
+                    : "Get report workflow access"}
               </button>
-              <span className="privacyNote">No spam. Just beta updates for AccessPing reports.</span>
+              <span className="privacyNote">No spam. Product updates only when the report workflow improves.</span>
               {leadMessage ? (
                 <p
                   className={leadStatus === "error" ? "leadError" : ""}
