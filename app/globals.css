@@ -2265,19 +2265,152 @@ button:disabled {
   line-height: 1.45;
 }
 
-.reportHistory {
+.reportLibrary {
   display: grid;
-  gap: 16px;
+  gap: 18px;
   margin-bottom: 24px;
-  padding: 22px;
-  background: var(--surface);
+  padding: 24px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-soft) 18%, transparent), transparent 42%),
+    var(--surface);
   border: 1px solid var(--line);
   border-radius: 8px;
 }
 
-:root[data-theme="dark"] .reportHistory {
-  background: var(--surface);
+:root[data-theme="dark"] .reportLibrary {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-soft) 22%, transparent), transparent 42%),
+    var(--surface);
   border-color: var(--line);
+}
+
+.libraryIntro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.56fr);
+  gap: 22px;
+  align-items: end;
+}
+
+.libraryIntro h3 {
+  margin: 0 0 8px;
+  font-size: 1.62rem;
+  font-weight: 680;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.libraryIntro p:not(.eyebrow) {
+  max-width: 680px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.58;
+}
+
+.libraryStats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.libraryStats span {
+  display: grid;
+  gap: 5px;
+  min-height: 82px;
+  padding: 14px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: color-mix(in srgb, var(--surface-strong) 82%, transparent);
+}
+
+.libraryStats span + span {
+  border-left: 1px solid var(--line);
+}
+
+.libraryStats strong {
+  color: var(--ink);
+  font-size: 1.55rem;
+  font-weight: 720;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.featuredReport {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 14px;
+  align-items: center;
+  min-height: 84px;
+  padding: 18px;
+  color: var(--ink);
+  text-align: left;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+}
+
+.featuredReport:hover {
+  background: var(--soft);
+}
+
+.featuredReport span {
+  display: grid;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.featuredReport small {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 1.12rem;
+  font-weight: 680;
+  text-transform: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: 0;
+}
+
+.featuredReport strong {
+  color: var(--accent-strong);
+  font-size: 1.65rem;
+  font-weight: 720;
+  font-variant-numeric: tabular-nums;
+}
+
+.featuredReport em {
+  justify-self: end;
+  padding: 7px 10px;
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 700;
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.libraryToolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.libraryToolbar div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 .textAction {
@@ -2301,9 +2434,10 @@ button:disabled {
 
 .historyList button {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1.4fr) auto repeat(4, minmax(90px, 0.42fr));
+  align-items: center;
   gap: 6px 16px;
-  min-height: 74px;
+  min-height: 68px;
   padding: 14px 16px;
   color: var(--ink);
   text-align: left;
@@ -2335,16 +2469,29 @@ button:disabled {
 }
 
 .historyList small {
-  grid-column: 1 / -1;
   color: var(--muted);
   font-size: 0.82rem;
 }
 
-.historyEmpty {
+.libraryEmpty {
+  display: grid;
+  gap: 8px;
   max-width: 720px;
-  margin: 0;
+  padding: 18px;
   color: var(--muted);
+  background: color-mix(in srgb, var(--surface-strong) 76%, transparent);
+  border: 1px dashed var(--line-strong);
+  border-radius: 8px;
   line-height: 1.58;
+}
+
+.libraryEmpty strong {
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.libraryEmpty p {
+  margin: 0;
 }
 
 .leadCapture {
@@ -3284,6 +3431,39 @@ code {
     grid-template-columns: 1fr;
   }
 
+  .libraryIntro,
+  .featuredReport,
+  .historyList button {
+    grid-template-columns: 1fr;
+  }
+
+  .libraryStats {
+    grid-template-columns: 1fr;
+  }
+
+  .libraryStats span + span {
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+
+  .libraryToolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .libraryToolbar div {
+    justify-content: stretch;
+  }
+
+  .libraryToolbar .textAction {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .featuredReport em {
+    justify-self: start;
+  }
+
   .leadCapture {
     grid-template-columns: 1fr;
     padding: 18px;
@@ -3544,7 +3724,7 @@ code {
   .landingSections,
   .leadCapture,
   .ctaActions,
-  .reportHistory,
+  .reportLibrary,
   .clientBrief,
   .reportCta {
     display: none !important;

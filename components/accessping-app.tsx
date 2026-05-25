@@ -34,6 +34,7 @@ type ScanResult = {
 type SavedReport = ScanResult & {
   reportKey: string;
   savedAt: string;
+  serverSynced?: boolean;
 };
 
 const exampleSites = [
@@ -328,6 +329,12 @@ function getScoreStatus(score: number) {
     summary:
       "The scan found enough friction that the page needs attention before it supports a public campaign or paid client delivery."
   };
+}
+
+function getReportRiskLabel(score: number, issueCount: number) {
+  if (score >= 90 && issueCount <= 1) return "Low risk";
+  if (score >= 75) return "Review needed";
+  return "Needs fixes";
 }
 
 function getTopPriorities(issues: ScanIssue[]) {
@@ -811,13 +818,26 @@ export default function Home() {
         throw new Error(payload.error || "The report was saved in this browser, but not on the server.");
       }
 
+      const syncedReports = nextReports.map((reportItem) =>
+        reportItem.reportKey === reportKey ? { ...reportItem, serverSynced: true } : reportItem
+      );
+      window.localStorage.setItem("accessping-reports", JSON.stringify(syncedReports));
+      setSavedReports(syncedReports);
       setSaveReportStatus("saved");
-      setSaveReportMessage("Saved to report history.");
+      setSaveReportMessage("Saved to your report library.");
       track("Report Saved", {
         score: result.score,
         issueCount: result.issueCount
       });
     } catch (saveError) {
+      if (savedInBrowser) {
+        const browserOnlyReports = nextReports.map((reportItem) =>
+          reportItem.reportKey === reportKey ? { ...reportItem, serverSynced: false } : reportItem
+        );
+        window.localStorage.setItem("accessping-reports", JSON.stringify(browserOnlyReports));
+        setSavedReports(browserOnlyReports);
+      }
+
       if (savedInBrowser) {
         setSaveReportStatus("saved");
         setSaveReportMessage(
@@ -924,6 +944,13 @@ export default function Home() {
       );
     }
   }
+
+  const latestSavedReport = savedReports[0];
+  const syncedReportCount = savedReports.filter((savedReport) => savedReport.serverSynced).length;
+  const averageSavedScore =
+    savedReports.length > 0
+      ? Math.round(savedReports.reduce((total, savedReport) => total + savedReport.score, 0) / savedReports.length)
+      : null;
 
   return (
     <main className="shell">
@@ -1439,35 +1466,80 @@ export default function Home() {
             </div>
           </div>
 
-          <section className="reportHistory" aria-label="Saved report history" data-scroll-reveal>
-            <div className="sectionHeading">
+          <section className="reportLibrary" aria-label="Saved report library" data-scroll-reveal>
+            <div className="libraryIntro">
               <div>
-                <span>Report history</span>
-                <small>Saved in this browser</small>
+                <p className="eyebrow">Report library</p>
+                <h3>Keep the proof after the scan.</h3>
+                <p>
+                  Save a report when the scan is useful. Reopen it later for client review, PDF export, or a quick
+                  follow-up pass before launch.
+                </p>
               </div>
-              {savedReports.length > 0 ? (
-                <button type="button" className="textAction" onClick={clearSavedReports}>
-                  Clear history
-                </button>
-              ) : null}
+              <div className="libraryStats" aria-label="Saved report summary">
+                <span>
+                  <strong>{savedReports.length}</strong>
+                  Reports
+                </span>
+                <span>
+                  <strong>{averageSavedScore ?? "-"}</strong>
+                  Avg score
+                </span>
+                <span>
+                  <strong>{syncedReportCount}</strong>
+                  Synced
+                </span>
+              </div>
             </div>
+
+            {latestSavedReport ? (
+              <button type="button" className="featuredReport" onClick={() => openSavedReport(latestSavedReport)}>
+                <span>
+                  Latest saved
+                  <small>{getDomain(latestSavedReport.url)}</small>
+                </span>
+                <strong>{latestSavedReport.score}/100</strong>
+                <em>{getReportRiskLabel(latestSavedReport.score, latestSavedReport.issueCount)}</em>
+              </button>
+            ) : null}
+
+            <div className="libraryToolbar">
+              <span>{savedReports.length > 0 ? "Open any saved report below." : "Your saved reports will appear here."}</span>
+              <div>
+                {result ? (
+                  <button type="button" className="textAction" onClick={saveCurrentReport} disabled={saveReportStatus === "saving"}>
+                    {saveReportStatus === "saving" ? "Saving..." : "Save current report"}
+                  </button>
+                ) : null}
+                {savedReports.length > 0 ? (
+                  <button type="button" className="textAction" onClick={clearSavedReports}>
+                    Clear history
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
             {savedReports.length > 0 ? (
               <div className="historyList">
                 {savedReports.map((savedReport) => (
                   <button type="button" key={savedReport.reportKey} onClick={() => openSavedReport(savedReport)}>
                     <span>{getDomain(savedReport.url)}</span>
                     <strong>{savedReport.score}/100</strong>
-                    <small>
-                      {savedReport.issueCount} issues, saved {formatScanDate(savedReport.savedAt)}
-                    </small>
+                    <small>{getReportRiskLabel(savedReport.score, savedReport.issueCount)}</small>
+                    <small>{savedReport.issueCount} issues</small>
+                    <small>{formatScanDate(savedReport.savedAt)}</small>
+                    <small>{savedReport.serverSynced ? "Server synced" : "Browser only"}</small>
                   </button>
                 ))}
               </div>
             ) : (
-              <p className="historyEmpty">
-                Save a report after scanning to reopen it later from this browser. Server persistence is ready once the
-                Supabase reports table is created.
-              </p>
+              <div className="libraryEmpty">
+                <strong>No saved reports yet</strong>
+                <p>
+                  Run a scan, review the findings, then save the report when it is worth keeping for a client or team
+                  conversation.
+                </p>
+              </div>
             )}
           </section>
 
