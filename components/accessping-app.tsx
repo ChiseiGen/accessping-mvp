@@ -1,6 +1,6 @@
 "use client";
 
-import { CSSProperties, FormEvent, MouseEvent, useEffect, useMemo, useRef, useState } from "react";
+import { CSSProperties, FormEvent, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { track } from "@vercel/analytics";
 import SwitchToggleThemeDemo from "@/components/ui/toggle-theme";
@@ -512,7 +512,6 @@ function getScanFailureCopy(message: string) {
 }
 
 export default function Home() {
-  const previewRef = useRef<HTMLElement | null>(null);
   const [url, setUrl] = useState("");
   const [result, setResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState("");
@@ -819,15 +818,6 @@ export default function Home() {
     }
   }
 
-  function handlePreviewPointerMove(event: MouseEvent<HTMLElement>) {
-    const panel = previewRef.current;
-    if (!panel) return;
-
-    const rect = panel.getBoundingClientRect();
-    panel.style.setProperty("--pointer-x", `${event.clientX - rect.left}px`);
-    panel.style.setProperty("--pointer-y", `${event.clientY - rect.top}px`);
-  }
-
   return (
     <main className="shell">
       <a className="skipLink" href="#scanner">
@@ -965,11 +955,9 @@ export default function Home() {
         </div>
 
         <aside
-          ref={previewRef}
-          className="previewPanel"
+          className={`previewPanel ${isScanning ? "isScanning" : ""}`}
           aria-label="Scanner preview"
           id="report"
-          onMouseMove={handlePreviewPointerMove}
           data-scroll-reveal
         >
           <div className="scanSweep" aria-hidden="true" />

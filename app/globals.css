@@ -965,8 +965,6 @@ button:disabled {
 }
 
 .previewPanel {
-  --pointer-x: 50%;
-  --pointer-y: 35%;
   position: sticky;
   top: 22px;
   overflow: hidden;
@@ -1003,21 +1001,7 @@ button:disabled {
 }
 
 .previewPanel::after {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(
-    260px circle at var(--pointer-x) var(--pointer-y),
-    color-mix(in srgb, var(--accent) 12%, transparent),
-    transparent 58%
-  );
-  content: "";
-  opacity: 0;
-  transition: opacity 220ms ease;
-}
-
-.previewPanel:hover::after {
-  opacity: 1;
+  display: none;
 }
 
 .scanSweep {
@@ -1034,8 +1018,13 @@ button:disabled {
     transparent 58%,
     transparent 100%
   );
+  opacity: 0;
   transform: translateX(-120%);
-  animation: sweepPanel 5.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.previewPanel.isScanning .scanSweep {
+  opacity: 1;
+  animation: sweepPanel 1.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
 }
 
 .panelHeader,
@@ -1066,10 +1055,6 @@ button:disabled {
 
 :root[data-theme="dark"] .statusPill {
   border-color: var(--line);
-}
-
-.statusDot {
-  animation: breathe 1.9s ease-in-out infinite;
 }
 
 .scoreDial {
@@ -1106,7 +1091,6 @@ button:disabled {
   border: 1px solid rgba(15, 118, 110, 0.12);
   border-radius: 999px;
   content: "";
-  animation: innerPulse 3.4s ease-in-out infinite;
 }
 
 .scoreDial span {
@@ -1230,8 +1214,13 @@ button:disabled {
   inset: 0;
   background: linear-gradient(90deg, transparent, rgba(15, 118, 110, 0.08), transparent);
   content: "";
+  opacity: 0;
   transform: translateX(-100%);
-  animation: timelineGlint 4.5s ease-in-out infinite;
+}
+
+.scanTimeline .active::after {
+  opacity: 1;
+  animation: timelineGlint 1.9s ease-in-out infinite;
 }
 
 :root[data-theme="dark"] .scanTimeline div {
@@ -2996,19 +2985,6 @@ code {
   to {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
-  }
-}
-
-@keyframes innerPulse {
-  0%,
-  100% {
-    opacity: 0.72;
-    transform: scale(1);
-  }
-
-  50% {
-    opacity: 1;
-    transform: scale(0.975);
   }
 }
 
