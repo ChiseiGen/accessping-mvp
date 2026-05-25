@@ -7,7 +7,7 @@ import "./globals.css";
 const siteUrl = "https://accessping-mvp.vercel.app";
 const siteTitle = "AccessPing";
 const siteDescription =
-  "Run a fast WCAG first pass on public pages, find handoff risks, and turn accessibility findings into client-ready reports.";
+  "Catch common accessibility issues before client review and turn public page scans into client-ready handoff reports.";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -25,7 +25,7 @@ const robotoMono = Roboto_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "AccessPing | Pre-handoff accessibility reports",
+    default: "AccessPing | Client-ready accessibility handoff reports",
     template: "%s | AccessPing"
   },
   description: siteDescription,
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
   publisher: "AccessPing",
   category: "accessibility software",
   openGraph: {
-    title: "AccessPing | Pre-handoff accessibility reports",
+    title: "AccessPing | Client-ready accessibility handoff reports",
     description: siteDescription,
     url: siteUrl,
     siteName: siteTitle,
@@ -64,7 +64,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "AccessPing | Pre-handoff accessibility reports",
+    title: "AccessPing | Client-ready accessibility handoff reports",
     description: siteDescription,
     images: ["/opengraph-image"]
   },
