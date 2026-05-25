@@ -2449,6 +2449,11 @@ button:disabled {
   background: var(--soft);
 }
 
+.historyList button.isActive {
+  background: var(--soft);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+}
+
 .historyList span,
 .historyList small {
   min-width: 0;
@@ -2492,6 +2497,187 @@ button:disabled {
 
 .libraryEmpty p {
   margin: 0;
+}
+
+.reportDetail {
+  display: grid;
+  gap: 18px;
+  padding: 20px;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.reportDetail.watch {
+  border-color: color-mix(in srgb, var(--serious) 28%, var(--line));
+}
+
+.reportDetail.risk {
+  border-color: color-mix(in srgb, var(--critical) 30%, var(--line));
+}
+
+.detailHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: start;
+}
+
+.detailHeader h3 {
+  max-width: 720px;
+  margin: 0 0 8px;
+  font-size: 1.48rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.16;
+}
+
+.detailHeader p:not(.eyebrow) {
+  max-width: 720px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.detailScore {
+  display: grid;
+  min-width: 132px;
+  padding: 14px;
+  text-align: right;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.detailScore strong {
+  color: var(--ink);
+  font-size: 2.15rem;
+  font-weight: 760;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.detailScore span,
+.detailScore small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.detailSummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.detailSummaryGrid div {
+  display: grid;
+  gap: 6px;
+  min-height: 74px;
+  padding: 14px;
+  background: var(--surface);
+}
+
+.detailSummaryGrid div + div {
+  border-left: 1px solid var(--line);
+}
+
+.detailSummaryGrid strong {
+  color: var(--ink);
+  font-size: 1.35rem;
+  font-weight: 720;
+  font-variant-numeric: tabular-nums;
+}
+
+.detailSummaryGrid span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.detailDecision {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 1px;
+  overflow: hidden;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.detailDecision div {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  background: var(--surface);
+}
+
+.detailDecision span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.detailDecision strong {
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.detailDecision p,
+.detailFixes p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.detailFixes {
+  display: grid;
+  gap: 12px;
+}
+
+.detailFixes ol {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.detailFixes li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.detailFixes strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--ink);
+}
+
+.detailActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.detailActions button {
+  justify-content: center;
+  min-width: 138px;
 }
 
 .leadCapture {
@@ -3433,15 +3619,23 @@ code {
 
   .libraryIntro,
   .featuredReport,
-  .historyList button {
+  .historyList button,
+  .detailHeader,
+  .detailDecision {
     grid-template-columns: 1fr;
   }
 
-  .libraryStats {
+  .libraryStats,
+  .detailSummaryGrid {
     grid-template-columns: 1fr;
   }
 
   .libraryStats span + span {
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+
+  .detailSummaryGrid div + div {
     border-top: 1px solid var(--line);
     border-left: 0;
   }
@@ -3462,6 +3656,15 @@ code {
 
   .featuredReport em {
     justify-self: start;
+  }
+
+  .detailScore {
+    width: 100%;
+    text-align: left;
+  }
+
+  .detailActions button {
+    width: 100%;
   }
 
   .leadCapture {

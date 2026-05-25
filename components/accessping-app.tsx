@@ -455,6 +455,14 @@ function scrollToResults() {
   }, 120);
 }
 
+function scrollToReportDetail() {
+  window.setTimeout(() => {
+    window.requestAnimationFrame(() => {
+      document.getElementById("report-detail")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }, 120);
+}
+
 function getScanFailureCopy(message: string) {
   const lowerMessage = message.toLowerCase();
 
@@ -534,6 +542,7 @@ export default function Home() {
   const [leadMessage, setLeadMessage] = useState("");
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [savedReports, setSavedReports] = useState<SavedReport[]>([]);
+  const [selectedReportKey, setSelectedReportKey] = useState("");
   const [saveReportStatus, setSaveReportStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [saveReportMessage, setSaveReportMessage] = useState("");
   const [activeSection, setActiveSection] = useState<(typeof navItems)[number]["id"]>("scanner");
@@ -576,7 +585,9 @@ export default function Home() {
   useEffect(() => {
     try {
       const reports = JSON.parse(window.localStorage.getItem("accessping-reports") || "[]") as SavedReport[];
-      setSavedReports(Array.isArray(reports) ? reports.slice(0, 8) : []);
+      const nextReports = Array.isArray(reports) ? reports.slice(0, 8) : [];
+      setSavedReports(nextReports);
+      setSelectedReportKey(nextReports[0]?.reportKey || "");
     } catch {
       setSavedReports([]);
     }
@@ -736,8 +747,18 @@ export default function Home() {
     window.print();
   }
 
-  async function downloadPdfReport() {
-    if (!result || isDownloadingPdf) return;
+  function printSavedReport(savedReport: SavedReport) {
+    setResult(savedReport);
+    setUrl(savedReport.url);
+    setSelectedReportKey(savedReport.reportKey);
+    window.setTimeout(() => {
+      track("Report Printed");
+      window.print();
+    }, 160);
+  }
+
+  async function downloadPdfReport(reportToDownload: ScanResult | null = result) {
+    if (!reportToDownload || isDownloadingPdf) return;
 
     setIsDownloadingPdf(true);
 
@@ -747,7 +768,7 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify(result)
+        body: JSON.stringify(reportToDownload)
       });
 
       if (!response.ok) {
@@ -757,7 +778,7 @@ export default function Home() {
       const blob = await response.blob();
       const objectUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      const domain = resultDomain.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase();
+      const domain = getDomain(reportToDownload.url).replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase();
 
       link.href = objectUrl;
       link.download = `accessping-${domain || "report"}.pdf`;
@@ -766,8 +787,8 @@ export default function Home() {
       link.remove();
       URL.revokeObjectURL(objectUrl);
       track("PDF Downloaded", {
-        score: result.score,
-        issueCount: result.issueCount
+        score: reportToDownload.score,
+        issueCount: reportToDownload.issueCount
       });
     } catch {
       setError("The PDF report could not be downloaded. Try Print report instead.");
@@ -803,6 +824,7 @@ export default function Home() {
     try {
       window.localStorage.setItem("accessping-reports", JSON.stringify(nextReports));
       setSavedReports(nextReports);
+      setSelectedReportKey(reportKey);
       savedInBrowser = true;
 
       const response = await fetch("/api/reports", {
@@ -823,6 +845,7 @@ export default function Home() {
       );
       window.localStorage.setItem("accessping-reports", JSON.stringify(syncedReports));
       setSavedReports(syncedReports);
+      setSelectedReportKey(reportKey);
       setSaveReportStatus("saved");
       setSaveReportMessage("Saved to your report library.");
       track("Report Saved", {
@@ -857,9 +880,10 @@ export default function Home() {
     }
   }
 
-  function openSavedReport(savedReport: SavedReport) {
+  function openSavedReport(savedReport: SavedReport, target: "detail" | "results" = "detail") {
     setResult(savedReport);
     setUrl(savedReport.url);
+    setSelectedReportKey(savedReport.reportKey);
     setError("");
     setLeadStatus("idle");
     setSaveReportStatus("idle");
@@ -868,12 +892,18 @@ export default function Home() {
       score: savedReport.score,
       issueCount: savedReport.issueCount
     });
-    scrollToResults();
+    if (target === "results") {
+      scrollToResults();
+      return;
+    }
+
+    scrollToReportDetail();
   }
 
   function clearSavedReports() {
     window.localStorage.removeItem("accessping-reports");
     setSavedReports([]);
+    setSelectedReportKey("");
     setSaveReportStatus("idle");
     setSaveReportMessage("Report history cleared from this browser.");
   }
@@ -946,6 +976,10 @@ export default function Home() {
   }
 
   const latestSavedReport = savedReports[0];
+  const detailReport =
+    savedReports.find((savedReport) => savedReport.reportKey === selectedReportKey) || latestSavedReport;
+  const detailPriorities = detailReport ? getTopPriorities(detailReport.issues) : [];
+  const detailDecision = detailReport ? getHandoffDecision(detailReport, detailPriorities[0]) : null;
   const syncedReportCount = savedReports.filter((savedReport) => savedReport.serverSynced).length;
   const averageSavedScore =
     savedReports.length > 0
@@ -1446,7 +1480,7 @@ export default function Home() {
               </p>
             </div>
             <div className="ctaActions" aria-label="Planned report actions">
-              <button type="button" onClick={downloadPdfReport} disabled={isDownloadingPdf}>
+              <button type="button" onClick={() => downloadPdfReport()} disabled={isDownloadingPdf}>
                 {isDownloadingPdf ? "Preparing PDF..." : "Download report PDF"}
               </button>
               <button type="button" onClick={printReport}>
@@ -1522,7 +1556,13 @@ export default function Home() {
             {savedReports.length > 0 ? (
               <div className="historyList">
                 {savedReports.map((savedReport) => (
-                  <button type="button" key={savedReport.reportKey} onClick={() => openSavedReport(savedReport)}>
+                  <button
+                    type="button"
+                    key={savedReport.reportKey}
+                    className={savedReport.reportKey === detailReport?.reportKey ? "isActive" : ""}
+                    aria-pressed={savedReport.reportKey === detailReport?.reportKey}
+                    onClick={() => openSavedReport(savedReport)}
+                  >
                     <span>{getDomain(savedReport.url)}</span>
                     <strong>{savedReport.score}/100</strong>
                     <small>{getReportRiskLabel(savedReport.score, savedReport.issueCount)}</small>
@@ -1541,6 +1581,91 @@ export default function Home() {
                 </p>
               </div>
             )}
+
+            {detailReport && detailDecision ? (
+              <article className={`reportDetail ${detailDecision.tone}`} id="report-detail" aria-label="Saved report detail">
+                <div className="detailHeader">
+                  <div>
+                    <p className="eyebrow">Saved report detail</p>
+                    <h3>{cleanPageTitle(detailReport.pageTitle, detailReport.url)}</h3>
+                    <p>
+                      {getDomain(detailReport.url)} was saved {formatScanDate(detailReport.savedAt)}. Use this view to
+                      reopen the handoff context without rerunning the scan.
+                    </p>
+                  </div>
+                  <div className="detailScore">
+                    <strong>{detailReport.score}</strong>
+                    <span>/100</span>
+                    <small>{getReportRiskLabel(detailReport.score, detailReport.issueCount)}</small>
+                  </div>
+                </div>
+
+                <div className="detailSummaryGrid" aria-label="Saved report severity summary">
+                  {(Object.keys(impactLabels) as Impact[]).map((impact) => (
+                    <div key={`detail-${detailReport.reportKey}-${impact}`}>
+                      <strong>{detailReport.summary[impact]}</strong>
+                      <span>{impactLabels[impact]}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="detailDecision">
+                  <div>
+                    <span>Decision</span>
+                    <strong>{detailDecision.label}</strong>
+                    <p>{detailDecision.summary}</p>
+                  </div>
+                  <div>
+                    <span>First action</span>
+                    <strong>{detailDecision.firstAction}</strong>
+                    <p>{detailDecision.actionDetail}</p>
+                  </div>
+                </div>
+
+                <div className="detailFixes">
+                  <div className="sectionHeading">
+                    <div>
+                      <span>Top fixes</span>
+                      <small>{detailPriorities.length > 0 ? "Review before handoff" : "Manual QA still needed"}</small>
+                    </div>
+                  </div>
+                  {detailPriorities.length > 0 ? (
+                    <ol>
+                      {detailPriorities.map((issue) => {
+                        const guidance = issueGuidance[issue.id] || genericGuidance;
+
+                        return (
+                          <li key={`detail-fix-${detailReport.reportKey}-${issue.id}`}>
+                            <span className={`impactDot ${issue.impact}`} aria-hidden="true" />
+                            <div>
+                              <strong>{issue.help}</strong>
+                              <p>{guidance.fix}</p>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  ) : (
+                    <p>
+                      No automated issues were saved for this report. Finish keyboard, screen reader, and responsive QA
+                      before calling it client-ready.
+                    </p>
+                  )}
+                </div>
+
+                <div className="detailActions">
+                  <button type="button" onClick={() => openSavedReport(detailReport, "results")}>
+                    Open in report view
+                  </button>
+                  <button type="button" onClick={() => downloadPdfReport(detailReport)} disabled={isDownloadingPdf}>
+                    {isDownloadingPdf ? "Preparing PDF..." : "Download PDF"}
+                  </button>
+                  <button type="button" onClick={() => printSavedReport(detailReport)}>
+                    Print
+                  </button>
+                </div>
+              </article>
+            ) : null}
           </section>
 
           <form className="leadCapture" id="early-access" onSubmit={submitLead} data-scroll-reveal>
