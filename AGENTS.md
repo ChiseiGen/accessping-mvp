@@ -8,6 +8,7 @@ This repository is AccessPing, a Next.js SaaS MVP for pre-handoff accessibility 
 
 - Use Indonesian when speaking with the project owner unless they ask otherwise.
 - Before major UI, copy, product, Supabase, or deploy work, mention which skill is being used.
+- If a new skill from `https://www.skills.sh/` becomes relevant, tell the project owner before installing it.
 - Keep the app focused on one goal: turning public website scans into actionable client handoff reports.
 - Do not add new production dependencies without explaining why.
 - Do not commit secrets, `.env.local`, local data files, build output, or agent skill folders.
