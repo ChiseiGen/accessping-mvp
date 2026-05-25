@@ -4,6 +4,11 @@ import { Analytics } from "@vercel/analytics/next";
 import { Poppins, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 
+const siteUrl = "https://accessping-mvp.vercel.app";
+const siteTitle = "AccessPing";
+const siteDescription =
+  "Run a fast WCAG first pass on public pages, find handoff risks, and turn accessibility findings into client-ready reports.";
+
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -18,34 +23,62 @@ const robotoMono = Roboto_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://accessping-mvp.vercel.app"),
+  metadataBase: new URL(siteUrl),
   title: {
-    default: "AccessPing",
+    default: "AccessPing | Pre-handoff accessibility reports",
     template: "%s | AccessPing"
   },
-  description:
-    "Find common accessibility issues before client handoff and turn WCAG scans into clear launch-ready fix lists.",
-  applicationName: "AccessPing",
+  description: siteDescription,
+  applicationName: siteTitle,
+  alternates: {
+    canonical: "/"
+  },
   keywords: [
     "accessibility scanner",
     "WCAG audit",
+    "WCAG report",
     "website accessibility",
-    "agency report",
-    "SaaS audit"
+    "client handoff",
+    "agency QA",
+    "accessibility report"
   ],
+  authors: [{ name: "AccessPing" }],
+  creator: "AccessPing",
+  publisher: "AccessPing",
+  category: "accessibility software",
   openGraph: {
-    title: "AccessPing",
-    description:
-      "A pre-handoff accessibility check for agencies, freelancers, and SaaS teams.",
-    siteName: "AccessPing",
-    type: "website"
+    title: "AccessPing | Pre-handoff accessibility reports",
+    description: siteDescription,
+    url: siteUrl,
+    siteName: siteTitle,
+    type: "website",
+    locale: "en_US",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "AccessPing accessibility report preview"
+      }
+    ]
   },
   twitter: {
     card: "summary_large_image",
-    title: "AccessPing",
-    description:
-      "Find common accessibility issues before client handoff and turn scans into clear fix lists."
-  }
+    title: "AccessPing | Pre-handoff accessibility reports",
+    description: siteDescription,
+    images: ["/opengraph-image"]
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1
+    }
+  },
+  manifest: "/manifest.webmanifest"
 };
 
 export const viewport: Viewport = {
@@ -53,7 +86,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#f6f7f4" },
-    { media: "(prefers-color-scheme: dark)", color: "#0d1117" }
+    { media: "(prefers-color-scheme: dark)", color: "#101411" }
   ]
 };
 
