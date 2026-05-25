@@ -31,6 +31,11 @@ type ScanResult = {
   isSample?: boolean;
 };
 
+type SavedReport = ScanResult & {
+  reportKey: string;
+  savedAt: string;
+};
+
 const exampleSites = [
   {
     url: "https://www.wikipedia.org",
@@ -521,6 +526,9 @@ export default function Home() {
   const [leadStatus, setLeadStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [leadMessage, setLeadMessage] = useState("");
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [savedReports, setSavedReports] = useState<SavedReport[]>([]);
+  const [saveReportStatus, setSaveReportStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [saveReportMessage, setSaveReportMessage] = useState("");
   const [activeSection, setActiveSection] = useState<(typeof navItems)[number]["id"]>("scanner");
   const displayScore = result ? result.score : isScanning ? 0 : 82;
   const scoreAngle = `${Math.max(0, Math.min(100, displayScore)) * 3.6}deg`;
@@ -556,6 +564,15 @@ export default function Home() {
     setTheme(initialTheme);
     document.documentElement.dataset.theme = initialTheme;
     document.documentElement.classList.toggle("dark", initialTheme === "dark");
+  }, []);
+
+  useEffect(() => {
+    try {
+      const reports = JSON.parse(window.localStorage.getItem("accessping-reports") || "[]") as SavedReport[];
+      setSavedReports(Array.isArray(reports) ? reports.slice(0, 8) : []);
+    } catch {
+      setSavedReports([]);
+    }
   }, []);
 
   useEffect(() => {
@@ -669,6 +686,8 @@ export default function Home() {
 
       setResult(payload);
       setLeadStatus("idle");
+      setSaveReportStatus("idle");
+      setSaveReportMessage("");
       track("Scan Completed", {
         score: payload.score,
         issueCount: payload.issueCount
@@ -690,6 +709,8 @@ export default function Home() {
     setUrl(sampleResult.url);
     setResult(sampleResult);
     setLeadStatus("idle");
+    setSaveReportStatus("idle");
+    setSaveReportMessage("");
     track("Sample Report Loaded", {
       score: sampleResult.score,
       issueCount: sampleResult.issueCount
@@ -749,6 +770,92 @@ export default function Home() {
     } finally {
       setIsDownloadingPdf(false);
     }
+  }
+
+  async function saveCurrentReport() {
+    if (!result || saveReportStatus === "saving") return;
+
+    const reportKey =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const savedReport: SavedReport = {
+      ...result,
+      reportKey,
+      savedAt: new Date().toISOString()
+    };
+    const nextReports = [
+      savedReport,
+      ...savedReports.filter((saved) => saved.url !== result.url || saved.scannedAt !== result.scannedAt)
+    ].slice(0, 8);
+
+    setSaveReportStatus("saving");
+    setSaveReportMessage("");
+    let savedInBrowser = false;
+
+    try {
+      window.localStorage.setItem("accessping-reports", JSON.stringify(nextReports));
+      setSavedReports(nextReports);
+      savedInBrowser = true;
+
+      const response = await fetch("/api/reports", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(savedReport)
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(payload.error || "The report was saved in this browser, but not on the server.");
+      }
+
+      setSaveReportStatus("saved");
+      setSaveReportMessage("Saved to report history.");
+      track("Report Saved", {
+        score: result.score,
+        issueCount: result.issueCount
+      });
+    } catch (saveError) {
+      if (savedInBrowser) {
+        setSaveReportStatus("saved");
+        setSaveReportMessage(
+          saveError instanceof Error
+            ? `${saveError.message} It is still saved in this browser.`
+            : "Saved in this browser. Server sync is not available yet."
+        );
+        return;
+      }
+
+      setSaveReportStatus("error");
+      setSaveReportMessage(
+        saveError instanceof Error
+          ? saveError.message
+          : "The report was saved in this browser, but not on the server."
+      );
+    }
+  }
+
+  function openSavedReport(savedReport: SavedReport) {
+    setResult(savedReport);
+    setUrl(savedReport.url);
+    setError("");
+    setLeadStatus("idle");
+    setSaveReportStatus("idle");
+    setSaveReportMessage("");
+    track("Saved Report Opened", {
+      score: savedReport.score,
+      issueCount: savedReport.issueCount
+    });
+    scrollToResults();
+  }
+
+  function clearSavedReports() {
+    window.localStorage.removeItem("accessping-reports");
+    setSavedReports([]);
+    setSaveReportStatus("idle");
+    setSaveReportMessage("Report history cleared from this browser.");
   }
 
   async function submitLead(event: FormEvent<HTMLFormElement>) {
@@ -1318,11 +1425,51 @@ export default function Home() {
               <button type="button" onClick={printReport}>
                 Print report
               </button>
+              <button type="button" onClick={saveCurrentReport} disabled={saveReportStatus === "saving"}>
+                {saveReportStatus === "saving" ? "Saving report..." : "Save report"}
+              </button>
               <button type="button" disabled>
                 Fix plan builder soon
               </button>
+              {saveReportMessage ? (
+                <p className={saveReportStatus === "error" ? "leadError" : ""} role="status">
+                  {saveReportMessage}
+                </p>
+              ) : null}
             </div>
           </div>
+
+          <section className="reportHistory" aria-label="Saved report history" data-scroll-reveal>
+            <div className="sectionHeading">
+              <div>
+                <span>Report history</span>
+                <small>Saved in this browser</small>
+              </div>
+              {savedReports.length > 0 ? (
+                <button type="button" className="textAction" onClick={clearSavedReports}>
+                  Clear history
+                </button>
+              ) : null}
+            </div>
+            {savedReports.length > 0 ? (
+              <div className="historyList">
+                {savedReports.map((savedReport) => (
+                  <button type="button" key={savedReport.reportKey} onClick={() => openSavedReport(savedReport)}>
+                    <span>{getDomain(savedReport.url)}</span>
+                    <strong>{savedReport.score}/100</strong>
+                    <small>
+                      {savedReport.issueCount} issues, saved {formatScanDate(savedReport.savedAt)}
+                    </small>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="historyEmpty">
+                Save a report after scanning to reopen it later from this browser. Server persistence is ready once the
+                Supabase reports table is created.
+              </p>
+            )}
+          </section>
 
           <form className="leadCapture" id="early-access" onSubmit={submitLead} data-scroll-reveal>
             <div>

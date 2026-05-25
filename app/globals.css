@@ -2258,6 +2258,95 @@ button:disabled {
   justify-content: center;
 }
 
+.ctaActions p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.reportHistory {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+:root[data-theme="dark"] .reportHistory {
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+.textAction {
+  min-height: 36px;
+  padding: 0 12px;
+  color: var(--muted);
+  font-size: 0.86rem;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+}
+
+.textAction:hover {
+  color: var(--ink);
+  background: var(--soft);
+}
+
+.historyList {
+  display: grid;
+  gap: 10px;
+}
+
+.historyList button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 16px;
+  min-height: 74px;
+  padding: 14px 16px;
+  color: var(--ink);
+  text-align: left;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+}
+
+.historyList button:hover {
+  background: var(--soft);
+}
+
+.historyList span,
+.historyList small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.historyList span {
+  font-weight: 650;
+}
+
+.historyList strong {
+  color: var(--accent-strong);
+  font-size: 1.16rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.historyList small {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.historyEmpty {
+  max-width: 720px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.58;
+}
+
 .leadCapture {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 0.72fr);
@@ -3455,6 +3544,7 @@ code {
   .landingSections,
   .leadCapture,
   .ctaActions,
+  .reportHistory,
   .clientBrief,
   .reportCta {
     display: none !important;

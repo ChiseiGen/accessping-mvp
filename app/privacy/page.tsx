@@ -28,9 +28,11 @@ export default function PrivacyPage() {
           <h2>Information we collect</h2>
           <p>
             When you run a scan, AccessPing processes the website URL you enter and
-            generates a temporary accessibility report. If you submit the lead form,
-            we store your email address, scanned URL, page title, score, issue count,
-            source, and timestamp.
+            generates a temporary accessibility report. If you save a report, we store
+            the scanned URL, page title, score, issue count, severity summary, issue
+            details, source, and timestamp. If you submit the lead form, we store your
+            email address, scanned URL, page title, score, issue count, source, and
+            timestamp.
           </p>
         </article>
 
@@ -64,9 +66,11 @@ export default function PrivacyPage() {
         <article>
           <h2>Your choices</h2>
           <p>
-            You can ask us to remove your submitted lead information by contacting
-            the project owner. If you do not want us to store your email, you can use
-            the scanner without submitting the lead form.
+            You can clear browser-saved report history from the product interface. You
+            can ask us to remove submitted lead or saved report information by
+            contacting the project owner. If you do not want us to store your email or
+            report data, you can use the scanner without saving a report or submitting
+            the lead form.
           </p>
         </article>
 
