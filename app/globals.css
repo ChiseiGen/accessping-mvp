@@ -2696,6 +2696,240 @@ button:disabled {
   min-width: 138px;
 }
 
+.shareReportMessage {
+  margin: -2px 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.sharedReportPage {
+  min-height: 100vh;
+  padding: 28px clamp(18px, 5vw, 72px) 64px;
+  color: var(--ink);
+  background:
+    linear-gradient(180deg, var(--surface) 0%, var(--bg) 46%, var(--surface) 100%),
+    var(--bg);
+}
+
+.sharedReportHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  max-width: 1060px;
+  margin: 0 auto 56px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.brandLockup {
+  display: inline-flex;
+  gap: 12px;
+  align-items: center;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.brandLockup span {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  color: var(--surface);
+  font-weight: 800;
+  background: var(--ink);
+  border-radius: 10px;
+}
+
+.sharedReportHero,
+.sharedDecision,
+.sharedSummaryGrid,
+.sharedIssueList {
+  max-width: 1060px;
+  margin-inline: auto;
+}
+
+.sharedReportHero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 180px;
+  gap: clamp(24px, 6vw, 88px);
+  align-items: end;
+  padding-bottom: 34px;
+  border-bottom: 1px solid var(--line);
+}
+
+.sharedReportHero h1 {
+  max-width: 780px;
+  margin: 14px 0 18px;
+  color: var(--ink);
+  font-size: 5rem;
+  line-height: 0.94;
+  letter-spacing: 0;
+}
+
+.sharedReportHero p {
+  max-width: 680px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 1.08rem;
+  line-height: 1.7;
+}
+
+.sharedScoreCard {
+  display: grid;
+  min-height: 170px;
+  padding: 22px;
+  place-items: center;
+  text-align: center;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: var(--shadow-soft);
+}
+
+.sharedScoreCard strong {
+  color: var(--ink);
+  font-size: 4.2rem;
+  line-height: 0.9;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.sharedScoreCard span,
+.sharedScoreCard small {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.sharedDecision {
+  margin-top: 28px;
+  padding: 24px;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--accent);
+  border-radius: 18px;
+}
+
+.sharedDecision.watch {
+  border-left-color: var(--serious);
+}
+
+.sharedDecision.risk {
+  border-left-color: var(--critical);
+}
+
+.sharedDecision span {
+  color: var(--accent-strong);
+  font-size: 0.78rem;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.sharedDecision h2 {
+  margin: 8px 0;
+  font-size: 2.2rem;
+}
+
+.sharedDecision p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.sharedSummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.sharedSummaryGrid div {
+  min-height: 124px;
+  padding: 20px;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+}
+
+.sharedSummaryGrid strong {
+  display: block;
+  margin-bottom: 18px;
+  font-size: 2rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.sharedSummaryGrid span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sharedIssueList {
+  margin-top: 38px;
+}
+
+.sharedIssueList ol {
+  display: grid;
+  gap: 14px;
+  padding: 0;
+  margin: 24px 0 0;
+  list-style: none;
+}
+
+.sharedIssueList li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+  padding: 20px;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+}
+
+.sharedIssueList h3 {
+  margin: 0 0 8px;
+  font-size: 1.15rem;
+}
+
+.sharedIssueList p {
+  margin: 0 0 12px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.sharedIssueList code {
+  display: inline-block;
+  max-width: 100%;
+  padding: 7px 9px;
+  overflow: hidden;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+}
+
+.sharedEmpty {
+  padding: 22px;
+  margin-top: 20px;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+}
+
+.sharedEmpty p {
+  margin: 8px 0 0;
+  color: var(--muted);
+}
+
 .leadCapture {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 0.72fr);
@@ -3480,6 +3714,19 @@ code {
     position: relative;
     top: auto;
   }
+
+  .sharedReportHero {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .sharedReportHero h1 {
+    font-size: 4rem;
+  }
+
+  .sharedScoreCard {
+    max-width: 220px;
+  }
 }
 
 @media (max-width: 760px) {
@@ -3575,6 +3822,44 @@ code {
     font-size: 2.34rem;
     line-height: 1.03;
     overflow-wrap: break-word;
+  }
+
+  .sharedReportPage {
+    padding: 18px 14px 44px;
+  }
+
+  .sharedReportHeader {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 34px;
+  }
+
+  .sharedReportHero h1 {
+    font-size: 2.6rem;
+    line-height: 1.02;
+  }
+
+  .sharedReportHero p {
+    font-size: 1rem;
+  }
+
+  .sharedScoreCard {
+    max-width: none;
+    min-height: 142px;
+  }
+
+  .sharedScoreCard strong {
+    font-size: 3.5rem;
+  }
+
+  .sharedDecision h2 {
+    font-size: 1.6rem;
+  }
+
+  .sharedSummaryGrid,
+  .sharedIssueList li {
+    grid-template-columns: 1fr;
   }
 
   .lede {

@@ -553,6 +553,7 @@ export default function Home() {
   const [saveReportMessage, setSaveReportMessage] = useState("");
   const [librarySyncStatus, setLibrarySyncStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
   const [librarySyncMessage, setLibrarySyncMessage] = useState("");
+  const [shareReportMessage, setShareReportMessage] = useState("");
   const isLibrarySyncingRef = useRef(false);
   const [activeSection, setActiveSection] = useState<(typeof navItems)[number]["id"]>("scanner");
   const displayScore = result ? result.score : isScanning ? 0 : 82;
@@ -753,6 +754,26 @@ export default function Home() {
       track("Report Printed");
       window.print();
     }, 160);
+  }
+
+  async function copyReportLink(savedReport: SavedReport) {
+    if (!savedReport.serverSynced) {
+      setShareReportMessage("Sync this report before sharing it with a client.");
+      return;
+    }
+
+    const shareUrl = `${window.location.origin}/report/${savedReport.reportKey}`;
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setShareReportMessage("Client report link copied.");
+      track("Report Link Copied", {
+        score: savedReport.score,
+        issueCount: savedReport.issueCount
+      });
+    } catch {
+      setShareReportMessage(shareUrl);
+    }
   }
 
   async function downloadPdfReport(reportToDownload: ScanResult | null = result) {
@@ -964,6 +985,7 @@ export default function Home() {
     setLeadStatus("idle");
     setSaveReportStatus("idle");
     setSaveReportMessage("");
+    setShareReportMessage("");
     track("Saved Report Opened", {
       score: savedReport.score,
       issueCount: savedReport.issueCount
@@ -1754,10 +1776,14 @@ export default function Home() {
                   <button type="button" onClick={() => downloadPdfReport(detailReport)} disabled={isDownloadingPdf}>
                     {isDownloadingPdf ? "Preparing PDF..." : "Download PDF"}
                   </button>
+                  <button type="button" onClick={() => copyReportLink(detailReport)} disabled={!detailReport.serverSynced}>
+                    {detailReport.serverSynced ? "Copy client link" : "Sync before share"}
+                  </button>
                   <button type="button" onClick={() => printSavedReport(detailReport)}>
                     Print
                   </button>
                 </div>
+                {shareReportMessage ? <p className="shareReportMessage" role="status">{shareReportMessage}</p> : null}
               </article>
             ) : null}
           </section>
