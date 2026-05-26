@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const lastUpdated = "May 24, 2026";
 
 export const metadata = {
@@ -8,9 +10,9 @@ export const metadata = {
 export default function PrivacyPage() {
   return (
     <main className="legalPage">
-      <a className="legalBack" href="/">
+      <Link className="legalBack" href="/">
         AccessPing
-      </a>
+      </Link>
 
       <section className="legalHero">
         <p className="eyebrow">Privacy Policy</p>

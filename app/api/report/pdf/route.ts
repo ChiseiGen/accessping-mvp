@@ -81,12 +81,6 @@ function formatDate(scannedAt: string) {
   });
 }
 
-function getScoreLabel(score: number) {
-  if (score >= 90) return "Ready for handoff after a quick accessibility pass";
-  if (score >= 75) return "Usable, but fix these before the client sees it";
-  return "Do not hand this off without an accessibility review";
-}
-
 function getHandoffSummary(payload: ReportPayload) {
   const summary = payload.summary || {};
   const critical = summary.critical || 0;
