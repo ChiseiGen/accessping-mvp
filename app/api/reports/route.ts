@@ -19,7 +19,22 @@ type ReportRecord = {
   createdAt: string;
 };
 
+type SupabaseReportRow = {
+  report_key: string;
+  url: string;
+  score: number;
+  issue_count: number;
+  page_title: string;
+  scanned_at: string;
+  summary: Record<Impact, number>;
+  issues: unknown[];
+  source: "manual-save";
+  created_at: string;
+};
+
 const reportStorePath = path.join(process.cwd(), "data", "reports.json");
+const reportSelect =
+  "report_key,url,score,issue_count,page_title,scanned_at,summary,issues,source,created_at";
 
 function getSupabaseConfig() {
   const supabaseUrl = process.env.SUPABASE_URL?.replace(/\/rest\/v1\/?$/i, "").replace(/\/$/, "");
@@ -87,6 +102,34 @@ function normalizeSummary(value: unknown): Record<Impact, number> {
   );
 }
 
+function normalizeReportKeys(value: unknown) {
+  const keys = Array.isArray(value)
+    ? value
+    : typeof value === "string"
+      ? value.split(",")
+      : [];
+
+  return keys
+    .map((key) => (typeof key === "string" ? key.trim() : ""))
+    .filter((key) => /^[a-zA-Z0-9_.:-]{8,80}$/.test(key))
+    .slice(0, 12);
+}
+
+function mapSupabaseReport(row: SupabaseReportRow): ReportRecord {
+  return {
+    reportKey: row.report_key,
+    url: row.url,
+    score: row.score,
+    issueCount: row.issue_count,
+    pageTitle: row.page_title,
+    scannedAt: row.scanned_at,
+    summary: normalizeSummary(row.summary),
+    issues: Array.isArray(row.issues) ? row.issues : [],
+    source: row.source,
+    createdAt: row.created_at
+  };
+}
+
 async function readExistingReports() {
   try {
     const file = await readFile(reportStorePath, "utf8");
@@ -94,6 +137,42 @@ async function readExistingReports() {
   } catch {
     return [];
   }
+}
+
+async function readReports(reportKeys: string[]) {
+  if (reportKeys.length === 0) {
+    return [];
+  }
+
+  const supabase = getSupabaseConfig();
+
+  if (supabase) {
+    const params = new URLSearchParams({
+      select: reportSelect,
+      report_key: `in.(${reportKeys.join(",")})`,
+      order: "created_at.desc"
+    });
+    const response = await fetch(`${supabase.restUrl}?${params.toString()}`, {
+      method: "GET",
+      headers: {
+        apikey: supabase.serviceRoleKey,
+        Authorization: `Bearer ${supabase.serviceRoleKey}`,
+        Accept: "application/json"
+      },
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(message || "Supabase could not fetch saved reports.");
+    }
+
+    const rows = (await response.json()) as SupabaseReportRow[];
+    return rows.map(mapSupabaseReport);
+  }
+
+  const reports = await readExistingReports();
+  return reports.filter((report) => reportKeys.includes(report.reportKey));
 }
 
 async function saveReport(report: ReportRecord) {
@@ -139,6 +218,31 @@ async function saveReport(report: ReportRecord) {
 
   await mkdir(path.dirname(reportStorePath), { recursive: true });
   await writeFile(reportStorePath, JSON.stringify(nextReports, null, 2), "utf8");
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const keys = normalizeReportKeys(request.nextUrl.searchParams.get("keys"));
+    const reports = await readReports(keys);
+
+    return NextResponse.json(
+      {
+        reports
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store"
+        }
+      }
+    );
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : "Saved reports could not be loaded."
+      },
+      { status: 400 }
+    );
+  }
 }
 
 export async function POST(request: NextRequest) {

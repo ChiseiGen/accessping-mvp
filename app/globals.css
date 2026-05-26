@@ -2427,6 +2427,22 @@ button:disabled {
   background: var(--soft);
 }
 
+.textAction:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
+.librarySyncMessage {
+  margin: -6px 0 2px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.librarySyncMessage.isError {
+  color: var(--critical);
+}
+
 .historyList {
   display: grid;
   gap: 10px;

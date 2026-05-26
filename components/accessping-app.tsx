@@ -1,6 +1,6 @@
 "use client";
 
-import { CSSProperties, FormEvent, useEffect, useMemo, useState } from "react";
+import { CSSProperties, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { track } from "@vercel/analytics";
@@ -36,6 +36,11 @@ type SavedReport = ScanResult & {
   reportKey: string;
   savedAt: string;
   serverSynced?: boolean;
+};
+
+type SavedReportResponse = ScanResult & {
+  reportKey: string;
+  createdAt: string;
 };
 
 const exampleSites = [
@@ -546,6 +551,9 @@ export default function Home() {
   const [selectedReportKey, setSelectedReportKey] = useState("");
   const [saveReportStatus, setSaveReportStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [saveReportMessage, setSaveReportMessage] = useState("");
+  const [librarySyncStatus, setLibrarySyncStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
+  const [librarySyncMessage, setLibrarySyncMessage] = useState("");
+  const isLibrarySyncingRef = useRef(false);
   const [activeSection, setActiveSection] = useState<(typeof navItems)[number]["id"]>("scanner");
   const displayScore = result ? result.score : isScanning ? 0 : 82;
   const scoreAngle = `${Math.max(0, Math.min(100, displayScore)) * 3.6}deg`;
@@ -581,17 +589,6 @@ export default function Home() {
     setTheme(initialTheme);
     document.documentElement.dataset.theme = initialTheme;
     document.documentElement.classList.toggle("dark", initialTheme === "dark");
-  }, []);
-
-  useEffect(() => {
-    try {
-      const reports = JSON.parse(window.localStorage.getItem("accessping-reports") || "[]") as SavedReport[];
-      const nextReports = Array.isArray(reports) ? reports.slice(0, 8) : [];
-      setSavedReports(nextReports);
-      setSelectedReportKey(nextReports[0]?.reportKey || "");
-    } catch {
-      setSavedReports([]);
-    }
   }, []);
 
   useEffect(() => {
@@ -881,6 +878,84 @@ export default function Home() {
     }
   }
 
+  const syncSavedReports = useCallback(async (reportSource: SavedReport[], options: { silent?: boolean } = {}) => {
+    const reportKeys = Array.from(new Set(reportSource.map((savedReport) => savedReport.reportKey).filter(Boolean)));
+
+    if (reportKeys.length === 0 || isLibrarySyncingRef.current) return;
+
+    isLibrarySyncingRef.current = true;
+    setLibrarySyncStatus("syncing");
+    if (!options.silent) {
+      setLibrarySyncMessage("Checking saved reports on the server...");
+    }
+
+    try {
+      const response = await fetch(`/api/reports?keys=${encodeURIComponent(reportKeys.join(","))}`, {
+        method: "GET",
+        cache: "no-store"
+      });
+      const payload = (await response.json().catch(() => ({}))) as {
+        reports?: SavedReportResponse[];
+        error?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(payload.error || "Saved reports could not be synced.");
+      }
+
+      const serverReports = Array.isArray(payload.reports) ? payload.reports : [];
+      const serverReportByKey = new Map(
+        serverReports.map((serverReport) => [
+          serverReport.reportKey,
+          {
+            ...serverReport,
+            savedAt: serverReport.createdAt || serverReport.scannedAt,
+            serverSynced: true
+          } satisfies SavedReport
+        ])
+      );
+      const nextReports = reportSource
+        .map((localReport) => serverReportByKey.get(localReport.reportKey) || localReport)
+        .slice(0, 8);
+
+      window.localStorage.setItem("accessping-reports", JSON.stringify(nextReports));
+      setSavedReports(nextReports);
+      setSelectedReportKey((currentKey) => currentKey || nextReports[0]?.reportKey || "");
+      setLibrarySyncStatus("synced");
+      setLibrarySyncMessage(
+        serverReports.length > 0
+          ? `Synced ${serverReports.length} saved report${serverReports.length === 1 ? "" : "s"} from Supabase.`
+          : "No server copy found yet. Your browser-saved reports are still available."
+      );
+      track("Report Library Synced", {
+        reportCount: serverReports.length
+      });
+    } catch (syncError) {
+      setLibrarySyncStatus("error");
+      setLibrarySyncMessage(
+        syncError instanceof Error
+          ? syncError.message
+          : "Saved reports could not be synced. Browser history is still available."
+      );
+    } finally {
+      isLibrarySyncingRef.current = false;
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      const reports = JSON.parse(window.localStorage.getItem("accessping-reports") || "[]") as SavedReport[];
+      const nextReports = Array.isArray(reports) ? reports.slice(0, 8) : [];
+      setSavedReports(nextReports);
+      setSelectedReportKey(nextReports[0]?.reportKey || "");
+      if (nextReports.length > 0) {
+        void syncSavedReports(nextReports, { silent: true });
+      }
+    } catch {
+      setSavedReports([]);
+    }
+  }, [syncSavedReports]);
+
   function openSavedReport(savedReport: SavedReport, target: "detail" | "results" = "detail") {
     setResult(savedReport);
     setUrl(savedReport.url);
@@ -907,6 +982,8 @@ export default function Home() {
     setSelectedReportKey("");
     setSaveReportStatus("idle");
     setSaveReportMessage("Report history cleared from this browser.");
+    setLibrarySyncStatus("idle");
+    setLibrarySyncMessage("");
   }
 
   async function submitLead(event: FormEvent<HTMLFormElement>) {
@@ -1547,12 +1624,28 @@ export default function Home() {
                   </button>
                 ) : null}
                 {savedReports.length > 0 ? (
+                  <button
+                    type="button"
+                    className="textAction"
+                    onClick={() => syncSavedReports(savedReports)}
+                    disabled={librarySyncStatus === "syncing"}
+                  >
+                    {librarySyncStatus === "syncing" ? "Syncing..." : "Sync reports"}
+                  </button>
+                ) : null}
+                {savedReports.length > 0 ? (
                   <button type="button" className="textAction" onClick={clearSavedReports}>
                     Clear history
                   </button>
                 ) : null}
               </div>
             </div>
+
+            {librarySyncMessage ? (
+              <p className={`librarySyncMessage ${librarySyncStatus === "error" ? "isError" : ""}`} role="status">
+                {librarySyncMessage}
+              </p>
+            ) : null}
 
             {savedReports.length > 0 ? (
               <div className="historyList">
