@@ -67,11 +67,19 @@ function getDomain(targetUrl: string) {
 
 function cleanPageTitle(title: string, targetUrl: string) {
   const domain = getDomain(targetUrl);
+  const brand = domain.split(".")[0] || domain;
   const rawTitle = title || domain;
-  const primary = rawTitle
-    .split(/\s[·|–—-]\s/g)
+  const parts = rawTitle
+    .split(/\s[-|]\s/g)
     .map((part) => part.trim())
-    .filter(Boolean)[0] || rawTitle;
+    .filter(Boolean);
+  const cleanedParts = parts.filter((part, index) => {
+    const normalized = part.toLowerCase();
+    const isBrandRepeat = normalized === brand.toLowerCase() || normalized === domain.toLowerCase();
+
+    return !(isBrandRepeat && index > 0);
+  });
+  const primary = cleanedParts[0] || rawTitle;
 
   return primary.length > 68 ? `${primary.slice(0, 65).trim()}...` : primary;
 }
@@ -126,6 +134,32 @@ function getDecision(report: ReportRow) {
   };
 }
 
+function getReportId(scannedAt: string, targetUrl: string) {
+  const datePart = new Date(scannedAt)
+    .toISOString()
+    .slice(0, 10)
+    .replaceAll("-", "");
+  const domainPart = getDomain(targetUrl)
+    .replace(/[^a-z0-9]/gi, "")
+    .slice(0, 10)
+    .toUpperCase();
+
+  return `AP-${datePart}-${domainPart || "REPORT"}`;
+}
+
+function getScoreBand(score: number) {
+  if (score >= 90) return "Low automated risk";
+  if (score >= 75) return "Review recommended";
+  return "Fixes needed";
+}
+
+function getPriorityAction(impact: Impact) {
+  if (impact === "critical") return "Fix before sending this page to client approval.";
+  if (impact === "serious") return "Resolve before handoff if this page is part of launch scope.";
+  if (impact === "moderate") return "Schedule for the next QA pass and retest the affected area.";
+  return "Treat as polish before final sign-off.";
+}
+
 async function getReport(reportKey: string) {
   const safeReportKey = cleanReportKey(reportKey);
   const supabase = getSupabaseConfig();
@@ -169,6 +203,10 @@ export default async function SharedReportPage({ params }: { params: Promise<{ r
   }
 
   const decision = getDecision(report);
+  const domain = getDomain(report.url);
+  const reportTitle = cleanPageTitle(report.page_title, report.url);
+  const reportId = getReportId(report.scanned_at, report.url);
+  const unresolvedIssueLabel = `${report.issue_count} issue group${report.issue_count === 1 ? "" : "s"}`;
   const topIssues = [...report.issues]
     .sort((a, b) => impactOrder[a.impact] - impactOrder[b.impact])
     .slice(0, 5);
@@ -183,35 +221,76 @@ export default async function SharedReportPage({ params }: { params: Promise<{ r
         <span>Client handoff report</span>
       </header>
 
-      <section className="sharedReportHero">
-        <div>
-          <p className="eyebrow">Automated WCAG first pass</p>
-          <h1>{cleanPageTitle(report.page_title, report.url)}</h1>
+      <section className="sharedReportCover">
+        <div className="sharedReportTitle">
+          <p className="eyebrow">Pre-handoff accessibility report</p>
+          <h1>{reportTitle}</h1>
           <p>
-            {getDomain(report.url)} scanned {formatDate(report.scanned_at)}. This report summarizes automated findings
-            and the next fixes to review before handoff.
+            Automated first pass for {domain}. Use this as a client-ready summary of detected access risks, priority
+            fixes, and the remaining manual QA scope.
           </p>
+          <div className="sharedMetaGrid" aria-label="Report metadata">
+            <span>
+              <small>Scanned page</small>
+              <strong>{domain}</strong>
+            </span>
+            <span>
+              <small>Scan time</small>
+              <strong>{formatDate(report.scanned_at)}</strong>
+            </span>
+            <span>
+              <small>Report ID</small>
+              <strong>{reportId}</strong>
+            </span>
+          </div>
         </div>
-        <div className="sharedScoreCard">
-          <strong>{report.score}</strong>
-          <span>/100</span>
-          <small>{report.issue_count} issue groups</small>
-        </div>
+
+        <aside className={`sharedStatusPanel ${decision.tone}`} aria-label="Report status">
+          <span>Access score</span>
+          <div>
+            <strong>{report.score}</strong>
+            <small>/100</small>
+          </div>
+          <p>{getScoreBand(report.score)}</p>
+          <em>{unresolvedIssueLabel}</em>
+        </aside>
       </section>
 
       <section className={`sharedDecision ${decision.tone}`}>
-        <span>Recommendation</span>
-        <h2>{decision.label}</h2>
+        <div>
+          <span>Recommendation</span>
+          <h2>{decision.label}</h2>
+        </div>
         <p>{decision.summary}</p>
       </section>
 
-      <section className="sharedSummaryGrid" aria-label="Severity summary">
-        {(Object.keys(impactLabels) as Impact[]).map((impact) => (
-          <div key={impact}>
-            <strong>{report.summary[impact]}</strong>
-            <span>{impactLabels[impact]}</span>
+      <section className="sharedScopePanel">
+        <div>
+          <span>Scope</span>
+          <strong>Automated first pass, not a full audit</strong>
+        </div>
+        <p>
+          AccessPing checks common WCAG issues that can be detected from a public page. Final sign-off should still
+          include keyboard navigation, screen reader labels, zoom, responsive layout, and content review.
+        </p>
+      </section>
+
+      <section className="sharedSummarySection" aria-label="Severity summary">
+        <div className="sectionHeading">
+          <div>
+            <span>Severity summary</span>
+            <small>Grouped automated findings</small>
           </div>
-        ))}
+        </div>
+
+        <div className="sharedSummaryGrid">
+          {(Object.keys(impactLabels) as Impact[]).map((impact) => (
+            <div key={impact} className={`summaryTile ${impact}`}>
+              <strong>{report.summary[impact]}</strong>
+              <span>{impactLabels[impact]}</span>
+            </div>
+          ))}
+        </div>
       </section>
 
       <section className="sharedIssueList">
@@ -220,18 +299,26 @@ export default async function SharedReportPage({ params }: { params: Promise<{ r
             <span>Top fixes</span>
             <small>{topIssues.length > 0 ? "Review before sign-off" : "Manual QA still recommended"}</small>
           </div>
-          <p>Automated evidence is useful, but final approval should include keyboard, screen reader, zoom, and content checks.</p>
+          <p>Each item includes the client-friendly issue, priority action, and first affected selector when available.</p>
         </div>
 
         {topIssues.length > 0 ? (
           <ol>
             {topIssues.map((issue) => (
               <li key={issue.id}>
-                <span className={`impactBadge ${issue.impact}`}>{impactLabels[issue.impact]}</span>
+                <div className="sharedIssueMeta">
+                  <span className={`impactBadge ${issue.impact}`}>{impactLabels[issue.impact]}</span>
+                  <small>{getPriorityAction(issue.impact)}</small>
+                </div>
                 <div>
                   <h3>{issue.help}</h3>
                   <p>{issue.description}</p>
-                  {issue.nodes?.[0]?.target?.[0] ? <code>{issue.nodes[0].target[0]}</code> : null}
+                  {issue.nodes?.[0]?.target?.[0] ? (
+                    <div className="sharedEvidence">
+                      <span>Affected selector</span>
+                      <code>{issue.nodes[0].target[0]}</code>
+                    </div>
+                  ) : null}
                 </div>
               </li>
             ))}
@@ -243,6 +330,11 @@ export default async function SharedReportPage({ params }: { params: Promise<{ r
           </div>
         )}
       </section>
+
+      <footer className="sharedReportFooter">
+        <span>Generated by AccessPing</span>
+        <Link href="/">Run another pre-handoff check</Link>
+      </footer>
     </main>
   );
 }
