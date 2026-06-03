@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import SharedCopyableSummary from "@/components/ui/shared-copyable-summary";
 
 export const dynamic = "force-dynamic";
 
@@ -147,10 +148,11 @@ function getReportId(scannedAt: string, targetUrl: string) {
   return `AP-${datePart}-${domainPart || "REPORT"}`;
 }
 
-function getScoreBand(score: number) {
-  if (score >= 90) return "Low automated risk";
-  if (score >= 75) return "Review recommended";
-  return "Fixes needed";
+function getReportStatusLabel(report: ReportRow) {
+  if (report.summary.critical > 0) return { label: "Blocked", tone: "risk" as const };
+  if (report.summary.serious > 0) return { label: "Needs fixes", tone: "watch" as const };
+  if (report.score < 90) return { label: "Needs fixes", tone: "watch" as const };
+  return { label: "Ready", tone: "good" as const };
 }
 
 function getPriorityAction(impact: Impact) {
@@ -251,7 +253,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ r
             <strong>{report.score}</strong>
             <small>/100</small>
           </div>
-          <p>{getScoreBand(report.score)}</p>
+          <p>{getReportStatusLabel(report).label}</p>
           <em>{unresolvedIssueLabel}</em>
         </aside>
       </section>
@@ -273,6 +275,27 @@ export default async function SharedReportPage({ params }: { params: Promise<{ r
           AccessPing checks common WCAG issues that can be detected from a public page. Final sign-off should still
           include keyboard navigation, screen reader labels, zoom, responsive layout, and content review.
         </p>
+      </section>
+
+      <section className="sharedScoreExplanation">
+        <div className="sharedScoreExplanationHeader">
+          <span>How the score is calculated</span>
+        </div>
+        <p>
+          The access score starts at 100 and subtracts points based on issue severity: critical issues deduct 18 points
+          each, serious issues deduct 10, moderate issues deduct 5, and minor issues deduct 2. The score reflects
+          automated checks only.
+        </p>
+        <div className="sharedScoreProof">
+          <div>
+            <strong>Can verify</strong>
+            <p>Automated checks found issues from public page markup.</p>
+          </div>
+          <div>
+            <strong>Cannot verify</strong>
+            <p>Keyboard navigation, screen reader behavior, zoom, and assistive technology compatibility.</p>
+          </div>
+        </div>
       </section>
 
       <section className="sharedSummarySection" aria-label="Severity summary">
@@ -329,6 +352,13 @@ export default async function SharedReportPage({ params }: { params: Promise<{ r
             <p>Finish the manual QA checklist before treating this page as client-ready.</p>
           </div>
         )}
+      </section>
+
+      <SharedCopyableSummary report={report} />
+
+      <section className="sharedPrivacyNote">
+        <span>Privacy</span>
+        <p>Anyone with this link can view this report. No account required. Reports are not linked to personal data.</p>
       </section>
 
       <footer className="sharedReportFooter">
