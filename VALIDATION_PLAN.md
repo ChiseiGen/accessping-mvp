@@ -72,13 +72,13 @@ Hey [Name],
 
 Just following up on the accessibility report tool. I know launch QA is a pain point for many freelancers.
 
-If timing isn't right, no worries — just wanted to make sure you're aware if it could help with client handoffs.
+If timing isn't right, no worries. I just wanted to make sure you're aware if it could help with client handoffs.
 
 Best
 
 ### For warm contacts (already engaged)
 
-Subject: Here's a sample AccessPing report — thoughts?
+Subject: Here's a sample AccessPing report - thoughts?
 
 Hi [Name],
 

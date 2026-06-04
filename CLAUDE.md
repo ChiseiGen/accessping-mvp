@@ -50,7 +50,7 @@ public/
 
 **Server-side accessibility scanning**: The scan endpoint (`app/api/scan/route.ts`) fetches HTML via Node.js fetch, parses it with jsdom, runs axe-core in that jsdom context, and calculates an access score based on weighted impact counts (critical: 18, serious: 10, moderate: 5, minor: 2).
 
-**Score calculation**: `Math.max(0, Math.min(100, 100 - penalty))` where penalty = sum(impact weight × count).
+**Score calculation**: `Math.max(0, Math.min(100, 100 - penalty))` where penalty = sum(impact weight times count).
 
 **Client-side state**: `components/accessping-app.tsx` is a large client component managing all state including scan results, saved reports (localStorage + Supabase sync), and theme preferences.
 
@@ -74,7 +74,7 @@ Run SQL files in `supabase/` in the Supabase SQL editor to create tables:
 - `leads.sql` creates `public.leads` for early-access capture
 - `reports.sql` creates `public.reports` for saved report persistence
 
-Both tables use RLS but have no anon policies—writes go through the service role key in server routes.
+Both tables use RLS but have no anon policies. Writes go through the service role key in server routes.
 
 ## Environment Variables
 
