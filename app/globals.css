@@ -3429,6 +3429,18 @@ button:disabled {
   text-transform: uppercase;
 }
 
+.selectedPlanNote {
+  display: inline-flex;
+  width: fit-content;
+  padding: 6px 9px;
+  color: var(--accent-strong);
+  font-size: 0.84rem;
+  font-weight: 650;
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+  border-radius: 999px;
+}
+
 .leadForm button {
   width: 100%;
 }
@@ -3962,7 +3974,8 @@ code {
   content: "";
 }
 
-.pricePlan a {
+.pricePlan a,
+.pricePlan button {
   display: inline-flex;
   justify-content: center;
   align-items: center;
@@ -3973,10 +3986,33 @@ code {
   font-weight: 650;
   background: var(--accent);
   border-radius: 7px;
+  border: none;
+  cursor: pointer;
+  transition:
+    background-color 190ms ease,
+    transform 190ms ease;
 }
 
-.pricePlan a:hover {
+.pricePlan a:hover,
+.pricePlan button:hover {
   background: var(--accent-strong);
+  transform: translateY(-1px);
+}
+
+.pricePlan a:active,
+.pricePlan button:active {
+  transform: translateY(0);
+}
+
+.pricePlan.isSelected,
+.pricePlan.isSelected:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent-soft) 52%, var(--surface-strong));
+}
+
+:root[data-theme="dark"] .pricePlan.isSelected,
+:root[data-theme="dark"] .pricePlan.isSelected:hover {
+  background: color-mix(in srgb, var(--accent-soft) 48%, var(--surface-strong));
 }
 
 @keyframes breathe {

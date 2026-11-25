@@ -319,6 +319,12 @@ const navItems = [
   }
 ] as const;
 
+const pricingPlanLabels = {
+  free: "Free - First pass",
+  pro: "Pro - Report workspace",
+  agency: "Agency - Client delivery"
+} as const;
+
 function getScoreStatus(score: number) {
   if (score >= 90) {
     return {
@@ -589,6 +595,7 @@ export default function Home() {
   const [librarySyncStatus, setLibrarySyncStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
   const [librarySyncMessage, setLibrarySyncMessage] = useState("");
   const [shareReportMessage, setShareReportMessage] = useState("");
+  const [selectedPricingPlan, setSelectedPricingPlan] = useState<"free" | "pro" | "agency" | null>(null);
   const isLibrarySyncingRef = useRef(false);
   const [activeSection, setActiveSection] = useState<(typeof navItems)[number]["id"]>("scanner");
   const displayScore = result ? result.score : isScanning ? 0 : 82;
@@ -1048,6 +1055,12 @@ export default function Home() {
     const trimmedEmail = leadEmail.trim().toLowerCase();
     if (!trimmedEmail) return;
 
+    if (selectedPricingPlan && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setLeadStatus("error");
+      setLeadMessage("Please enter a valid email address.");
+      return;
+    }
+
     setLeadStatus("saving");
     setLeadMessage("");
 
@@ -1056,7 +1069,8 @@ export default function Home() {
       url: result?.url || "",
       score: result?.score ?? null,
       issueCount: result?.issueCount ?? null,
-      pageTitle: result?.pageTitle || ""
+      pageTitle: result?.pageTitle || "",
+      pricingPlan: selectedPricingPlan
     };
 
     try {
@@ -1098,7 +1112,8 @@ export default function Home() {
       );
       track("Lead Captured", {
         score: result?.score ?? null,
-        issueCount: result?.issueCount ?? null
+        issueCount: result?.issueCount ?? null,
+        pricingPlan: selectedPricingPlan
       });
     } catch (leadError) {
       setLeadStatus("error");
@@ -1111,6 +1126,22 @@ export default function Home() {
   }
 
   const latestSavedReport = savedReports[0];
+
+  function selectPricingPlan(plan: "free" | "pro" | "agency", targetId: "scanner" | "early-access") {
+    setSelectedPricingPlan(plan);
+    track("Pricing Plan Selected", { plan });
+
+    window.requestAnimationFrame(() => {
+      document.getElementById(targetId)?.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+
+      if (targetId === "early-access") {
+        window.setTimeout(() => document.getElementById("lead-email")?.focus(), 420);
+      }
+    });
+  }
   const detailReport =
     savedReports.find((savedReport) => savedReport.reportKey === selectedReportKey) || latestSavedReport;
   const detailPriorities = detailReport ? getTopPriorities(detailReport.issues) : [];
@@ -1857,6 +1888,11 @@ export default function Home() {
             </div>
             <div className="leadForm">
               <span className="leadFormLabel">Work email</span>
+              {selectedPricingPlan ? (
+                <span className="selectedPlanNote">
+                  Selected plan: {pricingPlanLabels[selectedPricingPlan]}
+                </span>
+              ) : null}
               <label className="srOnly" htmlFor="lead-email">
                 Email address
               </label>
@@ -2006,7 +2042,7 @@ export default function Home() {
           </div>
 
           <div className="pricingGrid">
-            <article className="pricePlan">
+            <article className={`pricePlan${selectedPricingPlan === "free" ? " isSelected" : ""}`}>
               <div>
                 <span className="planLabel">Free</span>
                 <h3>First pass</h3>
@@ -2018,10 +2054,12 @@ export default function Home() {
                 <li>Access score and severity summary</li>
                 <li>Basic PDF and print report</li>
               </ul>
-              <a href="#scanner">Run a scan</a>
+              <button type="button" onClick={() => selectPricingPlan("free", "scanner")}>
+                Run a scan
+              </button>
             </article>
 
-            <article className="pricePlan featured">
+            <article className={`pricePlan featured${selectedPricingPlan === "pro" ? " isSelected" : ""}`}>
               <div>
                 <span className="planLabel">Pro</span>
                 <h3>Report workspace</h3>
@@ -2033,10 +2071,12 @@ export default function Home() {
                 <li>PDF history and report detail views</li>
                 <li>Fix-plan templates for common issues</li>
               </ul>
-              <a href="#early-access">Join workspace beta</a>
+              <button type="button" onClick={() => selectPricingPlan("pro", "early-access")}>
+                Join workspace beta
+              </button>
             </article>
 
-            <article className="pricePlan">
+            <article className={`pricePlan${selectedPricingPlan === "agency" ? " isSelected" : ""}`}>
               <div>
                 <span className="planLabel">Agency</span>
                 <h3>Client delivery</h3>
@@ -2048,7 +2088,9 @@ export default function Home() {
                 <li>Branded report exports</li>
                 <li>Team-ready fix prioritization</li>
               </ul>
-              <a href="#early-access">Request agency access</a>
+              <button type="button" onClick={() => selectPricingPlan("agency", "early-access")}>
+                Request agency access
+              </button>
             </article>
           </div>
         </section>
